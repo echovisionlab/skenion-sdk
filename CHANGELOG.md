@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.2.1...skenion-sdk-v0.2.2) (2026-06-15)
+
+
+### Bug Fixes
+
+* **sdk:** align contracts peer dependency ([#5](https://github.com/echovisionlab/skenion-sdk/issues/5)) ([0c6bb0a](https://github.com/echovisionlab/skenion-sdk/commit/0c6bb0aca42a545afb28570640b8d01803542e83))
+
 ## [0.2.1](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.2.0...skenion-sdk-v0.2.1) (2026-06-15)
 
 
