@@ -54,6 +54,24 @@ const node = defineNode({
 `t.gpu.texture2d()` emits `flow: "resource"` and
 `dataKind: "gpu.texture2d"`.
 
+## GPU Texture Semantics
+
+Skenion v0.1 does not define a separate `gpu` flow. GPU-backed values are
+represented as resource-like typed handles.
+
+For example, `t.gpu.texture2d()` emits:
+
+```ts
+{
+  flow: "resource",
+  dataKind: "gpu.texture2d"
+}
+```
+
+This means the graph carries a GPU resource handle, not CPU pixels. CPU/GPU
+crossing must be expressed through explicit converter nodes, such as video
+decode and texture upload nodes.
+
 ## Status
 
 Bootstrap repository for the Skenion project. Implementation follows the public architecture and release rules defined in [EchoVisionLab/skenion](https://github.com/echovisionlab/skenion).
