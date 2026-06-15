@@ -22,7 +22,7 @@
     "test": "node --test test/*.test.mjs"
   },
   "peerDependencies": {
-    "@skenion/contracts": "^0.1.0"
+    "@skenion/contracts": "^0.2.0"
   },
   "devDependencies": {
     "@skenion/contracts": "file:.deps/skenion-contracts/packages/ts",
