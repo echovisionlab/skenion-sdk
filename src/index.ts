@@ -1,4 +1,26 @@
 export {
+  SkenionRuntimeCollaborationError,
+  createRuntimeCollaborationCausalMetadata,
+  createRuntimeCollaborationChangeSetOperation,
+  createRuntimeCollaborationOperation,
+  createRuntimeCollaborationOperationBatch,
+  createRuntimeCollaborationPasteOperation,
+  createRuntimeCollaborationPresenceEnvelope,
+  createRuntimeCollaborationSelectionEnvelope,
+  createRuntimeCollaborationUndoRedoOperation,
+  isRuntimeCollaborationRebaseStrategy,
+  parseRuntimeCollaborationEvent,
+  parseRuntimeCollaborationOperationResult,
+  readRuntimeCollaborationEvent,
+  readRuntimeCollaborationOperation,
+  readRuntimeCollaborationOperationBatch,
+  readRuntimeCollaborationOperationBatchResult,
+  readRuntimeCollaborationOperationResult,
+  readRuntimeCollaborationPresence,
+  readRuntimeCollaborationSelection,
+  runtimeCollaborationRebaseStrategies
+} from "./collaboration.js";
+export {
   SkenionNodeDefinitionError,
   defineNode
 } from "./node-definition.js";
@@ -44,6 +66,17 @@ export {
   summarizeRuntimeConnectionProfile,
   summarizeRuntimeSidecarCapabilities
 } from "./runtime-client.js";
+export type {
+  CreateRuntimeCollaborationCausalMetadataOptions,
+  CreateRuntimeCollaborationChangeSetOperationOptions,
+  CreateRuntimeCollaborationOperationBatchOptions,
+  CreateRuntimeCollaborationOperationOptions,
+  CreateRuntimeCollaborationPasteOperationOptions,
+  CreateRuntimeCollaborationPresenceEnvelopeOptions,
+  CreateRuntimeCollaborationSelectionEnvelopeOptions,
+  CreateRuntimeCollaborationUndoRedoOperationOptions,
+  RuntimeCollaborationOperationBaseOptions
+} from "./collaboration.js";
 export type {
   DefineExtensionPackageOptions
 } from "./extension-manifest.js";
