@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.6.0...skenion-sdk-v0.7.0) (2026-06-21)
+
+
+### Features
+
+* **node-authoring:** expose v0.2 project helpers ([#26](https://github.com/echovisionlab/skenion-sdk/issues/26)) ([9552079](https://github.com/echovisionlab/skenion-sdk/commit/9552079f4a0533e2a64048ee39f4b8fcee21fa84))
+
 ## [0.6.0](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.5.0...skenion-sdk-v0.6.0) (2026-06-21)
 
 
