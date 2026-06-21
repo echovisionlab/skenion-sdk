@@ -5,13 +5,22 @@ lifecycle, command APIs, and capability negotiation.
 
 The SDK is UI-framework agnostic and does not depend on React or Mantine.
 
-## Initial Surface
+## Active Authoring Surface
 
-The first SDK surface focuses on node and extension package manifests:
+The primary SDK authoring surface targets Skenion graph v0.2 documents:
 
-- `defineNode()` creates normalized v0.1 node definition manifests.
-- `defineExtensionPackage()` creates normalized v0.1 extension package manifests.
-- `t.*` builders create canonical `flow + dataKind + constraints` port types.
+- `defineGraphDocument()` creates normalized v0.2 graph documents.
+- `definePatchDefinition()` and `definePatchLibrary()` create v0.2 patch
+  library entries.
+- `defineProjectDocument()` creates v0.2 project documents with a required
+  patch library.
+- `createGraphTargetRef()` and `patchPath.*` create Runtime graph targets for
+  root graphs, project patches, package patches, embedded patch instances, and
+  help working copies.
+- `createGraphFragment()` and `createGraphFragmentFromSelection()` create v0.2
+  graph fragments for clipboard, help, palette, and paste flows.
+- `defineNodeDefinition()` creates v0.2 node definition manifests using v0.2
+  ports.
 - Runtime client helpers construct default-session and explicit-session URLs,
   validate session info/events, track replay cursors, and summarize sidecar
   startup/health capability metadata.
@@ -22,74 +31,93 @@ The first SDK surface focuses on node and extension package manifests:
 Canonical examples:
 
 ```ts
-import { defineNode, t } from "@skenion/sdk";
+import {
+  createGraphTargetRef,
+  defineGraphDocument,
+  defineGraphNode,
+  definePatchDefinition,
+  defineProjectDocument,
+  definePort,
+  patchPath
+} from "@skenion/sdk";
 
-const node = defineNode({
-  id: "script.brightness",
-  version: "0.1.0",
-  displayName: "Brightness",
-  category: "Script",
-  ports: [
-    {
-      id: "enabled",
-      direction: "input",
-      type: t.value(t.bool()),
-      activation: "latched",
-      default: true
-    },
-    {
-      id: "pulse",
-      direction: "output",
-      type: t.event(t.bang())
-    }
-  ],
-  execution: {
-    model: "script_control"
-  },
-  state: {
-    persistent: true
-  },
-  capabilities: ["script.api.v0.1"],
-  scriptApiVersion: "0.1.0"
+const valueOut = definePort({
+  id: "out",
+  direction: "output",
+  type: "number.float",
+  rate: "control",
+  description: "Output value"
+});
+
+const graph = defineGraphDocument({
+  id: "graph.main",
+  revision: "rev-1",
+  nodes: [
+    defineGraphNode({
+      id: "value-1",
+      kind: "core.value",
+      kindVersion: "0.2.0",
+      params: { value: 0.5 },
+      ports: [valueOut]
+    })
+  ]
+});
+
+const patch = definePatchDefinition({
+  id: "patch.scale",
+  revision: "rev-patch-1",
+  graph
+});
+
+const project = defineProjectDocument({
+  id: "project.demo",
+  revision: "rev-project-1",
+  graph,
+  patchLibrary: [patch]
+});
+
+const target = createGraphTargetRef({
+  path: patchPath.projectPatch("patch.scale"),
+  baseRevision: "rev-patch-1"
 });
 ```
 
-Extension packages use a package directory with `skenion.extension.json` at the
-root. First-party core packages and third-party packages use the same shape:
+## Legacy v0.1 Import And Migration
+
+The v0.1 helpers remain available only for legacy package import and migration
+work:
 
 ```ts
-import { defineExtensionPackage, defineNode, t } from "@skenion/sdk";
+import {
+  defineLegacyExtensionPackageV01,
+  defineLegacyNodeV01,
+  legacyT,
+  migrateLegacyProjectDocumentV01ToProject
+} from "@skenion/sdk";
 
-const value = defineNode({
+const value = defineLegacyNodeV01({
   id: "core.value",
   version: "0.1.0",
   displayName: "Value",
   category: "Core",
-  ports: [{ id: "out", direction: "output", type: t.value(t.f32()) }],
+  ports: [{ id: "out", direction: "output", type: legacyT.value(legacyT.f32()) }],
   execution: { model: "value" }
 });
 
-const manifest = defineExtensionPackage({
+const manifest = defineLegacyExtensionPackageV01({
   id: "skenion/core",
   version: "0.1.0",
   kind: "core-package",
-  nodes: [value],
-  help: [{ nodeId: "core.value", markdownPath: "help/value.md" }],
-  tests: [
-    {
-      id: "value-baseline",
-      kind: "node",
-      target: "core.value",
-      fixturePath: "tests/value.input.json",
-      expectedPath: "tests/value.expected.json"
-    }
-  ]
+  nodes: [value]
 });
+
+const activeProject = migrateLegacyProjectDocumentV01ToProject(legacyProject);
 ```
 
-`t.bool()` emits `dataKind: "boolean"`. GPU textures are resources:
-`t.gpu.texture2d()` emits `flow: "resource"` and
-`dataKind: "gpu.texture2d"`.
+The historical `defineNode()`, `defineExtensionPackage()`, and `t.*` exports are
+deprecated aliases for the explicit legacy helpers. New collaboration,
+marketplace, clipboard, help, and Runtime paste helpers should use v0.2
+projects, patch paths, graph fragments, and `GraphTargetRef`.
 
 ## Runtime Session Helpers
 
@@ -138,10 +166,10 @@ const operation = createPasteGraphFragmentOperation({
 
 ## GPU Texture Semantics
 
-Skenion v0.1 does not define a separate `gpu` flow. GPU-backed values are
-represented as resource-like typed handles.
+Skenion v0.1 legacy helpers do not define a separate `gpu` flow. GPU-backed
+values are represented as resource-like typed handles in migration inputs.
 
-For example, `t.gpu.texture2d()` emits:
+For example, `legacyT.gpu.texture2d()` emits:
 
 ```ts
 {

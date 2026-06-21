@@ -22,12 +22,37 @@ export {
 } from "./collaboration.js";
 export {
   SkenionNodeDefinitionError,
+  defineLegacyNodeV01,
   defineNode
 } from "./node-definition.js";
 export {
   SkenionExtensionManifestError,
+  defineLegacyExtensionPackageV01,
   defineExtensionPackage
 } from "./extension-manifest.js";
+export {
+  SkenionLegacyMigrationError,
+  SkenionProjectAuthoringError,
+  createDefaultViewStateForGraph,
+  createGraphTargetRef,
+  defineGraphDocument,
+  defineGraphNode,
+  defineNodeDefinition,
+  definePatchDefinition,
+  definePatchLibrary,
+  definePort,
+  defineProjectDocument,
+  derivePatchContract,
+  deriveProjectPatchContracts,
+  migrateLegacyGraphDocumentV01ToGraph,
+  migrateLegacyProjectDocumentV01ToProject,
+  patchPath,
+  readGraphDocument,
+  readLegacyGraphDocumentV01,
+  readLegacyProjectDocumentV01,
+  readPatchDefinition,
+  readProjectDocument
+} from "./project-authoring.js";
 export {
   SkenionGraphFragmentError,
   SkenionPasteRequestError,
@@ -78,8 +103,21 @@ export type {
   RuntimeCollaborationOperationBaseOptions
 } from "./collaboration.js";
 export type {
-  DefineExtensionPackageOptions
+  DefineExtensionPackageOptions,
+  DefineLegacyExtensionPackageOptionsV01
 } from "./extension-manifest.js";
+export type {
+  CreateGraphTargetRefOptionsV02,
+  DefineGraphDocumentOptionsV02,
+  DefineGraphNodeOptionsV02,
+  DefineNodeDefinitionOptionsV02,
+  DefinePatchDefinitionOptionsV02,
+  DefinePortOptionsV02,
+  DefineProjectDocumentOptionsV02,
+  EmbeddedPatchPathOptionsV02,
+  HelpWorkingCopyPathOptionsV02,
+  PackagePatchPathOptionsV02
+} from "./project-authoring.js";
 export type {
   CreateGraphFragmentOptionsV02,
   CreatePasteGraphFragmentOperationOptionsV02,
@@ -107,15 +145,21 @@ export type {
 } from "./runtime-client.js";
 export type {
   DefineNodeOptions,
+  DefineLegacyNodeOptionsV01,
+  LegacyNodePortInputV01,
   NodePortInput,
   ScriptNodeLifecycle,
   ScriptNodeRuntimeContext
 } from "./node-definition.js";
 export {
+  legacyT,
   t
 } from "./type-builders.js";
 export type {
   DataKindSpec,
+  LegacyDataKindSpecV01,
+  LegacyTypeConstraintsV01,
+  LegacyTypeInputV01,
   TypeConstraints,
   TypeInput
 } from "./type-builders.js";
