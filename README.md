@@ -116,7 +116,7 @@ const reconnectHeaders = runtimeLastEventIdHeaders("7");
 `sessionId` omitted or `null` uses the Runtime default-session alias
 (`/v0/session`). Passing a session id uses explicit session addressing
 (`/v0/sessions/{sessionId}`). Session info and event readers validate through
-`@skenion/contracts` 0.37.0.
+`@skenion/contracts` 0.38.0.
 
 Paste operation helpers omit attribution by default, but accept the contract
 `RuntimeOperationAttribution` fields when caller context has useful non-security

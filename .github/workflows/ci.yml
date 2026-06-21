@@ -17,9 +17,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Resolve contracts release tag
+        id: contracts
+        run: |
+          version="$(node -p "require('./package.json').peerDependencies['@skenion/contracts'].replace(/^[^0-9]*/, '')")"
+          echo "tag=skenion-contracts-v${version}" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v6
         with:
           repository: echovisionlab/skenion-contracts
+          ref: ${{ steps.contracts.outputs.tag }}
           path: .deps/skenion-contracts
       - uses: pnpm/action-setup@v6
         with:
