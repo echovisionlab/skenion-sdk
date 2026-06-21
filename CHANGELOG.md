@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.3.0...skenion-sdk-v0.3.1) (2026-06-21)
+
+
+### Bug Fixes
+
+* **ci:** publish sdk against released contracts ([#12](https://github.com/echovisionlab/skenion-sdk/issues/12)) ([17a7e74](https://github.com/echovisionlab/skenion-sdk/commit/17a7e74caf8989f768bb963653e739916c9132c1))
+
 ## [0.3.0](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.2.2...skenion-sdk-v0.3.0) (2026-06-21)
 
 
