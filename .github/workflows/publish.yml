@@ -4,11 +4,14 @@ on:
   release:
     types:
       - published
-  workflow_dispatch:
 
 permissions:
   contents: read
   id-token: write
+
+concurrency:
+  group: publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -23,6 +26,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: echovisionlab/skenion-contracts
+          ref: skenion-contracts-v0.34.0
           path: .deps/skenion-contracts
       - uses: pnpm/action-setup@v6
         with:
@@ -42,6 +46,13 @@ jobs:
         run: |
           version="$(node -p "require('./package.json').version")"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
+      - run: |
+          expected="skenion-sdk-v${{ steps.package.outputs.version }}"
+          actual="${{ github.event.release.tag_name }}"
+          if [[ "${actual}" != "${expected}" ]]; then
+            echo "release tag ${actual} does not match package version ${expected}" >&2
+            exit 1
+          fi
       - id: registry
         run: |
           if npm view "@skenion/sdk@${{ steps.package.outputs.version }}" version >/dev/null 2>&1; then
