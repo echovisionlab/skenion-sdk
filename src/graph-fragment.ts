@@ -21,6 +21,7 @@ import type {
   PasteGraphFragmentRequest,
   PasteGraphFragmentResponse,
   PastePlacement,
+  RuntimeOperationAttribution,
   RuntimeOperationEnvelope,
   ViewStateV01
 } from "@skenion/contracts";
@@ -55,6 +56,7 @@ export interface CreatePasteGraphFragmentRequestOptionsV02 {
 export interface CreatePasteGraphFragmentOperationOptionsV02 {
   id: string;
   request: PasteGraphFragmentRequest;
+  attribution?: RuntimeOperationAttribution;
   correlationId?: string;
   createdAt?: string;
 }
@@ -327,6 +329,7 @@ export function createPasteGraphFragmentOperation(
     id: options.id,
     kind: "pasteGraphFragment",
     request: options.request,
+    ...(options.attribution === undefined ? {} : { attribution: options.attribution }),
     ...(options.correlationId === undefined ? {} : { correlationId: options.correlationId }),
     ...(options.createdAt === undefined ? {} : { createdAt: options.createdAt })
   };

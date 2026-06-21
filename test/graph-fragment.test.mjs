@@ -228,7 +228,7 @@ test("source metadata helpers preserve patch-library and help source identity", 
   assert.equal(updated.metadata?.source.path.kind, "package-patch-definition");
 });
 
-test("paste request and session operation do not require actor identity", () => {
+test("paste request and session operation omit attribution by default", () => {
   const fragment = createGraphFragmentFromSelection(graph, {
     selectedNodeIds: ["source", "middle"],
     outsideEndpointPolicy: "omit"
@@ -259,6 +259,38 @@ test("paste request and session operation do not require actor identity", () => 
   assert.equal("attribution" in operation, false);
   assert.equal(operation.kind, "pasteGraphFragment");
   assert.equal(operation.request.target.baseRevision, "rev-1");
+});
+
+test("paste session operation supports optional contract attribution", () => {
+  const fragment = createGraphFragmentFromSelection(graph, {
+    selectedNodeIds: ["source", "middle"],
+    outsideEndpointPolicy: "omit"
+  });
+  const request = createPasteGraphFragmentRequest({
+    target,
+    fragment,
+    placement: {
+      kind: "position",
+      x: 320,
+      y: 240
+    }
+  });
+  const operation = createPasteGraphFragmentOperation({
+    id: "op.paste.attributed",
+    request,
+    attribution: {
+      actorId: "participant-a",
+      clientId: "window-a",
+      label: "paste from help"
+    }
+  });
+
+  assert.deepEqual(operation.attribution, {
+    actorId: "participant-a",
+    clientId: "window-a",
+    label: "paste from help"
+  });
+  assert.equal(operation.kind, "pasteGraphFragment");
 });
 
 test("paste helpers support minimal valid request and operation envelopes", () => {

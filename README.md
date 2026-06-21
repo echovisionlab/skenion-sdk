@@ -12,6 +12,9 @@ The first SDK surface focuses on node and extension package manifests:
 - `defineNode()` creates normalized v0.1 node definition manifests.
 - `defineExtensionPackage()` creates normalized v0.1 extension package manifests.
 - `t.*` builders create canonical `flow + dataKind + constraints` port types.
+- Runtime client helpers construct default-session and explicit-session URLs,
+  validate session info/events, track replay cursors, and summarize sidecar
+  startup/health capability metadata.
 - generated manifests are validated through `@skenion/contracts`.
 - script lifecycle typing exposes only `onInit`, `onInput`, `onEvent`, and
   `onDispose`.
@@ -87,6 +90,51 @@ const manifest = defineExtensionPackage({
 `t.bool()` emits `dataKind: "boolean"`. GPU textures are resources:
 `t.gpu.texture2d()` emits `flow: "resource"` and
 `dataKind: "gpu.texture2d"`.
+
+## Runtime Session Helpers
+
+Runtime helpers work with local-managed, local-shared, and remote Runtime base
+URLs without requiring a hardcoded client identity:
+
+```ts
+import {
+  createRuntimeClient,
+  parseRuntimeSessionEvent,
+  runtimeLastEventIdHeaders
+} from "@skenion/sdk";
+
+const runtime = createRuntimeClient({
+  baseUrl: "http://127.0.0.1:3761",
+  sessionId: "window-a"
+});
+
+const infoUrl = runtime.sessionUrl({ route: "info" });
+const eventsUrl = runtime.eventsUrl("7");
+const reconnectHeaders = runtimeLastEventIdHeaders("7");
+```
+
+`sessionId` omitted or `null` uses the Runtime default-session alias
+(`/v0/session`). Passing a session id uses explicit session addressing
+(`/v0/sessions/{sessionId}`). Session info and event readers validate through
+`@skenion/contracts` 0.37.0.
+
+Paste operation helpers omit attribution by default, but accept the contract
+`RuntimeOperationAttribution` fields when caller context has useful non-security
+metadata:
+
+```ts
+import { createPasteGraphFragmentOperation } from "@skenion/sdk";
+
+const operation = createPasteGraphFragmentOperation({
+  id: "op.paste.1",
+  request,
+  attribution: {
+    actorId: "participant-a",
+    clientId: "window-a",
+    label: "paste from help"
+  }
+});
+```
 
 ## GPU Texture Semantics
 
