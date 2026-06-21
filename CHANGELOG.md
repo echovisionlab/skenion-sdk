@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.3.1...skenion-sdk-v0.4.0) (2026-06-21)
+
+
+### Features
+
+* **sdk:** expose graph fragment paste helpers ([#19](https://github.com/echovisionlab/skenion-sdk/issues/19)) ([8be9252](https://github.com/echovisionlab/skenion-sdk/commit/8be9252b5672a19ba5b05acd1b2fb295f376b50f))
+
 ## [0.3.1](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.3.0...skenion-sdk-v0.3.1) (2026-06-21)
 
 
