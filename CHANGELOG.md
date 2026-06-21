@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.4.0...skenion-sdk-v0.5.0) (2026-06-21)
+
+
+### Features
+
+* add session-aware Runtime client helpers ([#21](https://github.com/echovisionlab/skenion-sdk/issues/21)) ([5bee6bf](https://github.com/echovisionlab/skenion-sdk/commit/5bee6bf8f094f6ba15bd3fe72c62cf757a3801a1))
+
 ## [0.4.0](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.3.1...skenion-sdk-v0.4.0) (2026-06-21)
 
 
