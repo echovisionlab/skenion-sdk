@@ -30,7 +30,7 @@ export interface ScriptNodeLifecycle {
   onDispose?: (context: ScriptNodeRuntimeContext) => void | Promise<void>;
 }
 
-export interface NodePortInput {
+export interface LegacyNodePortInputV01 {
   id: string;
   direction: PortDirection;
   type: DataTypeV01;
@@ -40,12 +40,12 @@ export interface NodePortInput {
   activation?: PortActivation;
 }
 
-export interface DefineNodeOptions {
+export interface DefineLegacyNodeOptionsV01 {
   id: string;
   version: string;
   displayName: string;
   category: string;
-  ports: NodePortInput[];
+  ports: LegacyNodePortInputV01[];
   execution: {
     model: ExecutionModelV01;
     clock?: "frame" | "audio" | "beat" | "timecode" | "external";
@@ -58,6 +58,12 @@ export interface DefineNodeOptions {
   lifecycle?: ScriptNodeLifecycle;
 }
 
+/** @deprecated Use DefineLegacyNodeOptionsV01 for v0.1 import/migration helpers only. */
+export interface DefineNodeOptions extends DefineLegacyNodeOptionsV01 {}
+
+/** @deprecated Use LegacyNodePortInputV01 for v0.1 import/migration helpers only. */
+export interface NodePortInput extends LegacyNodePortInputV01 {}
+
 export class SkenionNodeDefinitionError extends Error {
   readonly errors: string[];
 
@@ -68,7 +74,7 @@ export class SkenionNodeDefinitionError extends Error {
   }
 }
 
-function normalizePort(port: NodePortInput): NodePortInput {
+function normalizePort(port: LegacyNodePortInputV01): LegacyNodePortInputV01 {
   return {
     ...port,
     type: {
@@ -77,7 +83,7 @@ function normalizePort(port: NodePortInput): NodePortInput {
   };
 }
 
-export function defineNode(options: DefineNodeOptions): NodeDefinitionManifestV01 {
+export function defineLegacyNodeV01(options: DefineLegacyNodeOptionsV01): NodeDefinitionManifestV01 {
   const manifest: NodeDefinitionManifestV01 = {
     schema: "skenion.node.definition",
     schemaVersion: "0.1.0",
@@ -107,3 +113,6 @@ export function defineNode(options: DefineNodeOptions): NodeDefinitionManifestV0
 
   return validation.value;
 }
+
+/** @deprecated v0.1 node manifests are legacy import/migration helpers only. Use defineNodeDefinition for active v0.2 node authoring. */
+export const defineNode = defineLegacyNodeV01;

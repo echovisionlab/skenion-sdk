@@ -4,7 +4,10 @@ import {
   SkenionNodeDefinitionError,
   SkenionExtensionManifestError,
   defineExtensionPackage,
+  defineLegacyExtensionPackageV01,
+  defineLegacyNodeV01,
   defineNode,
+  legacyT,
   t
 } from "../dist/index.js";
 
@@ -48,6 +51,37 @@ test("defineNode returns a normalized valid manifest", () => {
   assert.equal(manifest.permissions.length, 0);
   assert.equal(manifest.ports[0].type.dataKind, "boolean");
   assert.equal(manifest.ports[1].type.flow, "event");
+});
+
+test("legacy v0.1 node and package helpers are explicit import/migration aliases", () => {
+  const node = defineLegacyNodeV01({
+    id: "legacy.value",
+    version: "0.1.0",
+    displayName: "Legacy Value",
+    category: "Legacy",
+    execution: {
+      model: "value"
+    },
+    ports: [
+      {
+        id: "out",
+        direction: "output",
+        type: legacyT.value(legacyT.f32())
+      }
+    ]
+  });
+  const manifest = defineLegacyExtensionPackageV01({
+    id: "legacy/package",
+    version: "0.1.0",
+    kind: "core-package",
+    nodes: [node]
+  });
+
+  assert.equal(defineNode, defineLegacyNodeV01);
+  assert.equal(defineExtensionPackage, defineLegacyExtensionPackageV01);
+  assert.equal(t, legacyT);
+  assert.equal(node.schemaVersion, "0.1.0");
+  assert.equal(manifest.provides.nodes?.[0].id, "legacy.value");
 });
 
 test("defineNode defaults optional state and metadata fields", () => {

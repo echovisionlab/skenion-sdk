@@ -11,7 +11,7 @@ import type {
   NodeDefinitionManifestV01
 } from "@skenion/contracts";
 
-export interface DefineExtensionPackageOptions {
+export interface DefineLegacyExtensionPackageOptionsV01 {
   id: string;
   version: string;
   kind: ExtensionKindV01;
@@ -27,6 +27,9 @@ export interface DefineExtensionPackageOptions {
   frontend?: ExtensionFrontendMetadataV01;
 }
 
+/** @deprecated Use DefineLegacyExtensionPackageOptionsV01 for v0.1 import/migration helpers only. */
+export interface DefineExtensionPackageOptions extends DefineLegacyExtensionPackageOptionsV01 {}
+
 export class SkenionExtensionManifestError extends Error {
   readonly errors: string[];
 
@@ -37,7 +40,7 @@ export class SkenionExtensionManifestError extends Error {
   }
 }
 
-export function defineExtensionPackage(options: DefineExtensionPackageOptions): ExtensionManifestV01 {
+export function defineLegacyExtensionPackageV01(options: DefineLegacyExtensionPackageOptionsV01): ExtensionManifestV01 {
   const manifest: ExtensionManifestV01 = {
     schema: "skenion.extension.manifest",
     schemaVersion: "0.1.0",
@@ -65,3 +68,6 @@ export function defineExtensionPackage(options: DefineExtensionPackageOptions): 
 
   return validation.value;
 }
+
+/** @deprecated v0.1 extension manifests are legacy import/migration helpers only. */
+export const defineExtensionPackage = defineLegacyExtensionPackageV01;
