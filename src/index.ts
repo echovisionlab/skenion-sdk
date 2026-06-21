@@ -2,6 +2,13 @@ export {
   SkenionNodeDefinitionError,
   defineNode
 } from "./node-definition.js";
+export {
+  SkenionExtensionManifestError,
+  defineExtensionPackage
+} from "./extension-manifest.js";
+export type {
+  DefineExtensionPackageOptions
+} from "./extension-manifest.js";
 export type {
   DefineNodeOptions,
   NodePortInput,
