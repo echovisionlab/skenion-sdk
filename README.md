@@ -118,6 +118,24 @@ const reconnectHeaders = runtimeLastEventIdHeaders("7");
 (`/v0/sessions/{sessionId}`). Session info and event readers validate through
 `@skenion/contracts` 0.37.0.
 
+Paste operation helpers omit attribution by default, but accept the contract
+`RuntimeOperationAttribution` fields when caller context has useful non-security
+metadata:
+
+```ts
+import { createPasteGraphFragmentOperation } from "@skenion/sdk";
+
+const operation = createPasteGraphFragmentOperation({
+  id: "op.paste.1",
+  request,
+  attribution: {
+    actorId: "participant-a",
+    clientId: "window-a",
+    label: "paste from help"
+  }
+});
+```
+
 ## GPU Texture Semantics
 
 Skenion v0.1 does not define a separate `gpu` flow. GPU-backed values are
