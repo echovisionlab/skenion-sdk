@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.5.0...skenion-sdk-v0.6.0) (2026-06-21)
+
+
+### Features
+
+* **runtime-client:** add collaboration SDK helpers ([ad56594](https://github.com/echovisionlab/skenion-sdk/commit/ad565945c4b72ab014df3eca4fb663fe2c9b8688)), closes [#17](https://github.com/echovisionlab/skenion-sdk/issues/17)
+
 ## [0.5.0](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.4.0...skenion-sdk-v0.5.0) (2026-06-21)
 
 
