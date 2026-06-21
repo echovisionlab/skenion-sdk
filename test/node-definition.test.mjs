@@ -203,6 +203,57 @@ test("defineExtensionPackage rejects invalid native ABI declarations", () => {
   );
 });
 
+test("defineExtensionPackage preserves optional native package metadata", () => {
+  const manifest = defineExtensionPackage({
+    id: "example/native-sensor",
+    version: "0.1.0",
+    kind: "native-runtime",
+    runtimeAbiVersion: "0.1.0",
+    sdkVersion: "0.2.2",
+    native: {
+      entrypoint: "skenion_extension_init",
+      artifacts: [
+        {
+          os: "macos",
+          arch: "aarch64",
+          abi: "c",
+          path: "target/release/libskenion_native_sensor.dylib",
+          sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        }
+      ]
+    },
+    codecs: [
+      {
+        id: "example.sensor.text",
+        version: "0.1.0",
+        transportKinds: ["serial"],
+        direction: "decode"
+      }
+    ],
+    transports: [
+      {
+        id: "example.serial",
+        version: "0.1.0",
+        kind: "serial"
+      }
+    ],
+    permissions: ["io.serial"],
+    frontend: {
+      displayName: "Native Sensor",
+      description: "Serial sensor package",
+      tags: ["sensor"]
+    }
+  });
+
+  assert.equal(manifest.sdkVersion, "0.2.2");
+  assert.equal(manifest.native?.artifacts[0].abi, "c");
+  assert.equal(manifest.provides.codecs?.[0].direction, "decode");
+  assert.equal(manifest.provides.transports?.[0].kind, "serial");
+  assert.deepEqual(manifest.permissions, ["io.serial"]);
+  assert.equal(manifest.frontend?.displayName, "Native Sensor");
+  assert.deepEqual(manifest.frontend?.tags, ["sensor"]);
+});
+
 test("type builders emit canonical v0.1 flow and dataKind pairs", () => {
   assert.deepEqual(t.event(t.bang()), {
     flow: "event",
