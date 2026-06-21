@@ -1,0 +1,55 @@
+name: Publish
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  npm:
+    name: npm
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'skenion-sdk-v')
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        with:
+          repository: echovisionlab/skenion-contracts
+          path: .deps/skenion-contracts
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.12.4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+        working-directory: .deps/skenion-contracts
+      - run: pnpm run build
+        working-directory: .deps/skenion-contracts
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - id: package
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+      - id: registry
+        run: |
+          if npm view "@skenion/sdk@${{ steps.package.outputs.version }}" version >/dev/null 2>&1; then
+            echo "published=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "published=false" >> "${GITHUB_OUTPUT}"
+          fi
+      - if: steps.registry.outputs.published != 'true'
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
