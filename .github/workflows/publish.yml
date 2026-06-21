@@ -20,7 +20,7 @@ jobs:
   npm:
     name: npm
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'skenion-sdk-v')
+    if: startsWith(github.event.release.tag_name, 'skenion-sdk-v')
     steps:
       - uses: actions/checkout@v6
       - uses: actions/checkout@v6
