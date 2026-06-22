@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.7.0...skenion-sdk-v0.7.1) (2026-06-22)
+
+
+### Bug Fixes
+
+* **sdk:** use explicit default session path ([#30](https://github.com/echovisionlab/skenion-sdk/issues/30)) ([7f21e4c](https://github.com/echovisionlab/skenion-sdk/commit/7f21e4c80e165f0d62b643f9db26f13b6ae00309))
+
 ## [0.7.0](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.6.0...skenion-sdk-v0.7.0) (2026-06-21)
 
 
