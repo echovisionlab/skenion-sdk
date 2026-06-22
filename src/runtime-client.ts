@@ -63,7 +63,7 @@ export interface RuntimeClientOptions {
 
 export interface RuntimeClient {
   readonly baseUrl: string;
-  readonly sessionId: string | null;
+  readonly sessionId: string;
   sessionPath(route?: RuntimeSessionRoute): string;
   sessionUrl(options?: Omit<RuntimeSessionUrlOptions, "sessionId">): URL;
   eventsUrl(cursor?: RuntimeEventReplayCursorInput): URL;
@@ -202,9 +202,11 @@ function trimTrailingSlash(value: string): string {
   return value.endsWith("/") && value !== "/" ? value.slice(0, -1) : value;
 }
 
-function normalizeSessionId(sessionId: string | null | undefined): string | null {
+const DEFAULT_RUNTIME_SESSION_ID = "default";
+
+function normalizeSessionId(sessionId: string | null | undefined): string {
   if (sessionId === null || sessionId === undefined) {
-    return null;
+    return DEFAULT_RUNTIME_SESSION_ID;
   }
 
   const normalized = sessionId.trim();
@@ -291,9 +293,7 @@ export function normalizeRuntimeBaseUrl(baseUrl: string | URL): string {
 
 export function runtimeSessionPath(address: RuntimeSessionAddress = {}): string {
   const sessionId = normalizeSessionId(address.sessionId);
-  const basePath = sessionId === null
-    ? "/v0/session"
-    : `/v0/sessions/${encodeURIComponent(sessionId)}`;
+  const basePath = `/v0/sessions/${encodeURIComponent(sessionId)}`;
   const route = normalizeRoute(address.route);
   return route.length === 0 ? basePath : `${basePath}/${route}`;
 }

@@ -146,7 +146,6 @@ const runtimeInfo = {
   apiVersion: "0.1.0",
   capabilities: [
     "session.addressing",
-    "session.defaultAlias",
     "session.events.replay",
     "runtime.profile.localManaged",
     "runtime.profile.localShared",
@@ -202,7 +201,8 @@ const healthResponse = {
 test("runtime session URL helpers cover default and explicit session routes", () => {
   assert.equal(normalizeRuntimeBaseUrl("http://127.0.0.1:3761/"), "http://127.0.0.1:3761");
   assert.equal(normalizeRuntimeBaseUrl("https://runtime.example.com/skenion/?x=1#hash"), "https://runtime.example.com/skenion");
-  assert.equal(runtimeSessionPath(), "/v0/session");
+  assert.equal(runtimeSessionPath(), "/v0/sessions/default");
+  assert.equal(runtimeSessionPath({ sessionId: null, route: "info" }), "/v0/sessions/default/info");
   assert.equal(
     runtimeSessionPath({ sessionId: "window/a", route: "events/stream" }),
     "/v0/sessions/window%2Fa/events/stream"
@@ -218,7 +218,7 @@ test("runtime session URL helpers cover default and explicit session routes", ()
         skipUndefined: undefined
       }
     }).toString(),
-    "https://runtime.example.com/skenion/v0/session/info?profile=remote&dry=true"
+    "https://runtime.example.com/skenion/v0/sessions/default/info?profile=remote&dry=true"
   );
 
   assert.equal(
@@ -258,11 +258,11 @@ test("runtime client helper carries base URL and switches sessions", () => {
   );
 
   const defaultClient = client.withSession(null);
-  assert.equal(defaultClient.sessionId, null);
-  assert.equal(defaultClient.sessionPath(), "/v0/session");
+  assert.equal(defaultClient.sessionId, "default");
+  assert.equal(defaultClient.sessionPath(), "/v0/sessions/default");
   assert.equal(
     defaultClient.eventsUrl().toString(),
-    "https://runtime.example.com/skenion/v0/session/events/stream"
+    "https://runtime.example.com/skenion/v0/sessions/default/events/stream"
   );
 });
 
