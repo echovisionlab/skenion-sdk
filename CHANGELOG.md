@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.43.0](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.7.0...skenion-sdk-v0.43.0) (2026-06-22)
+
+
+### Features
+
+* **sdk:** add release train manifest helper ([5409c1b](https://github.com/echovisionlab/skenion-sdk/commit/5409c1bd45952702ffa02ab96c9141596b98636c)), closes [#16](https://github.com/echovisionlab/skenion-sdk/issues/16)
+
+
+### Bug Fixes
+
+* align contracts peer dependency with 0.43.0 ([8f978ee](https://github.com/echovisionlab/skenion-sdk/commit/8f978eec0d769a1d41f6db27ef4315046388785a))
+* **ci:** force train release-as ([1437bec](https://github.com/echovisionlab/skenion-sdk/commit/1437bec6e7d07c5c9dd5ba05e8eae9e2b38323dc))
+* **ci:** require train release dispatch ([a26c208](https://github.com/echovisionlab/skenion-sdk/commit/a26c208d278eb49782621e7d94d1330bb609d688))
+* **sdk:** use explicit default session path ([#30](https://github.com/echovisionlab/skenion-sdk/issues/30)) ([7f21e4c](https://github.com/echovisionlab/skenion-sdk/commit/7f21e4c80e165f0d62b643f9db26f13b6ae00309))
+
 ## [0.7.0](https://github.com/echovisionlab/skenion-sdk/compare/skenion-sdk-v0.6.0...skenion-sdk-v0.7.0) (2026-06-21)
 
 
