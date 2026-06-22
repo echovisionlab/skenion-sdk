@@ -1,20 +1,20 @@
 import {
-  analyzeGraphFragmentV02,
-  validateGraphFragmentV02,
+  analyzeGraphFragmentV01,
+  validateGraphFragmentV01,
   validatePasteGraphFragmentRequest,
   validatePasteGraphFragmentResponse,
   validateRuntimeOperationEnvelope
 } from "@skenion/contracts";
 import type {
-  EdgeSpecV02,
-  GraphDocumentV02,
-  GraphFragmentOmittedEdgeV02,
-  GraphFragmentOutsideEndpointPolicyV02,
-  GraphFragmentV02,
-  GraphFragmentValidationOptionsV02,
-  GraphFragmentValidationResultV02,
-  GraphFragmentViewV02,
-  GraphNodeV02,
+  EdgeSpecV01,
+  GraphDocumentV01,
+  GraphFragmentOmittedEdgeV01,
+  GraphFragmentOutsideEndpointPolicyV01,
+  GraphFragmentV01,
+  GraphFragmentValidationOptionsV01,
+  GraphFragmentValidationResultV01,
+  GraphFragmentViewV01,
+  GraphNodeV01,
   GraphTargetRef,
   IdRemapResult,
   PasteGraphFragmentOptions,
@@ -26,34 +26,36 @@ import type {
   ViewStateV01
 } from "@skenion/contracts";
 
-export interface CreateGraphFragmentOptionsV02 {
+const CURRENT_SCHEMA_VERSION = "0.1.0";
+
+export interface CreateGraphFragmentOptions {
   id?: string;
-  nodes: GraphNodeV02[];
-  edges?: EdgeSpecV02[];
-  view?: GraphFragmentViewV02;
-  omittedEdges?: GraphFragmentOmittedEdgeV02[];
+  nodes: GraphNodeV01[];
+  edges?: EdgeSpecV01[];
+  view?: GraphFragmentViewV01;
+  omittedEdges?: GraphFragmentOmittedEdgeV01[];
   metadata?: Record<string, unknown>;
   sourceMetadata?: Record<string, unknown>;
-  outsideEndpointPolicy?: GraphFragmentOutsideEndpointPolicyV02;
+  outsideEndpointPolicy?: GraphFragmentOutsideEndpointPolicyV01;
 }
 
-export interface GraphFragmentSelectionOptionsV02 {
+export interface GraphFragmentSelectionOptions {
   id?: string;
   selectedNodeIds: string[];
   viewState?: ViewStateV01;
   metadata?: Record<string, unknown>;
   sourceMetadata?: Record<string, unknown>;
-  outsideEndpointPolicy?: GraphFragmentOutsideEndpointPolicyV02;
+  outsideEndpointPolicy?: GraphFragmentOutsideEndpointPolicyV01;
 }
 
-export interface CreatePasteGraphFragmentRequestOptionsV02 {
+export interface CreatePasteGraphFragmentRequestOptions {
   target: GraphTargetRef;
-  fragment: GraphFragmentV02;
+  fragment: GraphFragmentV01;
   placement?: PastePlacement;
   options?: PasteGraphFragmentOptions;
 }
 
-export interface CreatePasteGraphFragmentOperationOptionsV02 {
+export interface CreatePasteGraphFragmentOperationOptions {
   id: string;
   request: PasteGraphFragmentRequest;
   attribution?: RuntimeOperationAttribution;
@@ -61,7 +63,7 @@ export interface CreatePasteGraphFragmentOperationOptionsV02 {
   createdAt?: string;
 }
 
-export interface PasteGraphFragmentResponseSummaryV02 {
+export interface PasteGraphFragmentResponseSummary {
   ok: boolean;
   applied: boolean;
   conflict: boolean;
@@ -127,15 +129,15 @@ function sourceRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function nodeIdSet(nodes: GraphNodeV02[]): Set<string> {
+function nodeIdSet(nodes: GraphNodeV01[]): Set<string> {
   return new Set(nodes.map((node) => node.id));
 }
 
-function edgeIsInternal(edge: EdgeSpecV02, selectedNodeIds: Set<string>): boolean {
+function edgeIsInternal(edge: EdgeSpecV01, selectedNodeIds: Set<string>): boolean {
   return selectedNodeIds.has(edge.source.nodeId) && selectedNodeIds.has(edge.target.nodeId);
 }
 
-function omittedEdge(edge: EdgeSpecV02, reason: GraphFragmentOmittedEdgeV02["reason"]): GraphFragmentOmittedEdgeV02 {
+function omittedEdge(edge: EdgeSpecV01, reason: GraphFragmentOmittedEdgeV01["reason"]): GraphFragmentOmittedEdgeV01 {
   return {
     id: edge.id,
     source: { ...edge.source },
@@ -145,12 +147,12 @@ function omittedEdge(edge: EdgeSpecV02, reason: GraphFragmentOmittedEdgeV02["rea
 }
 
 function normalizeExternalEdges(
-  fragment: GraphFragmentV02,
-  outsideEndpointPolicy: GraphFragmentOutsideEndpointPolicyV02
-): GraphFragmentV02 {
+  fragment: GraphFragmentV01,
+  outsideEndpointPolicy: GraphFragmentOutsideEndpointPolicyV01
+): GraphFragmentV01 {
   const selectedNodeIds = nodeIdSet(fragment.nodes);
-  const internalEdges: EdgeSpecV02[] = [];
-  const externalEdges: EdgeSpecV02[] = [];
+  const internalEdges: EdgeSpecV01[] = [];
+  const externalEdges: EdgeSpecV01[] = [];
 
   for (const edge of fragment.edges) {
     if (edgeIsInternal(edge, selectedNodeIds)) {
@@ -181,10 +183,10 @@ function normalizeExternalEdges(
 }
 
 function validateFragmentOrThrow(
-  fragment: GraphFragmentV02,
-  options: GraphFragmentValidationOptionsV02
-): GraphFragmentV02 {
-  const validation = validateGraphFragmentV02(fragment, options);
+  fragment: GraphFragmentV01,
+  options: GraphFragmentValidationOptionsV01
+): GraphFragmentV01 {
+  const validation = validateGraphFragmentV01(fragment, options);
   if (!validation.ok) {
     throw new SkenionGraphFragmentError(validation.errors);
   }
@@ -195,12 +197,12 @@ function validateFragmentOrThrow(
 function viewForSelection(
   selectedNodeIds: Set<string>,
   viewState: ViewStateV01 | undefined
-): GraphFragmentViewV02 | undefined {
+): GraphFragmentViewV01 | undefined {
   if (!viewState) {
     return undefined;
   }
 
-  const nodes: GraphFragmentViewV02["nodes"] = {};
+  const nodes: GraphFragmentViewV01["nodes"] = {};
   for (const [nodeId, view] of Object.entries(viewState.canvas.nodes)) {
     if (selectedNodeIds.has(nodeId)) {
       nodes[nodeId] = { ...view };
@@ -211,17 +213,17 @@ function viewForSelection(
 }
 
 export function analyzeGraphFragment(
-  fragment: GraphFragmentV02,
-  options: GraphFragmentValidationOptionsV02 = {}
-): GraphFragmentValidationResultV02 {
-  return analyzeGraphFragmentV02(fragment, options);
+  fragment: GraphFragmentV01,
+  options: GraphFragmentValidationOptionsV01 = {}
+): GraphFragmentValidationResultV01 {
+  return analyzeGraphFragmentV01(fragment, options);
 }
 
 export function validateGraphFragment(
   fragment: unknown,
-  options: GraphFragmentValidationOptionsV02 = {}
-): GraphFragmentV02 {
-  const validation = validateGraphFragmentV02(fragment, options);
+  options: GraphFragmentValidationOptionsV01 = {}
+): GraphFragmentV01 {
+  const validation = validateGraphFragmentV01(fragment, options);
   if (!validation.ok) {
     throw new SkenionGraphFragmentError(validation.errors);
   }
@@ -229,11 +231,11 @@ export function validateGraphFragment(
   return validation.value;
 }
 
-export function createGraphFragment(options: CreateGraphFragmentOptionsV02): GraphFragmentV02 {
+export function createGraphFragment(options: CreateGraphFragmentOptions): GraphFragmentV01 {
   const outsideEndpointPolicy = options.outsideEndpointPolicy ?? "reject";
-  const fragment: GraphFragmentV02 = {
+  const fragment: GraphFragmentV01 = {
     schema: "skenion.graph.fragment",
-    schemaVersion: "0.2.0",
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     nodes: [...options.nodes],
     edges: [...(options.edges ?? [])],
     ...(options.id === undefined ? {} : { id: options.id }),
@@ -252,13 +254,13 @@ export function createGraphFragment(options: CreateGraphFragmentOptionsV02): Gra
 }
 
 export function createGraphFragmentFromSelection(
-  graph: GraphDocumentV02,
-  options: GraphFragmentSelectionOptionsV02
-): GraphFragmentV02 {
+  graph: GraphDocumentV01,
+  options: GraphFragmentSelectionOptions
+): GraphFragmentV01 {
   const selectedNodeIds = new Set(options.selectedNodeIds);
   const nodes = graph.nodes.filter((node) => selectedNodeIds.has(node.id));
-  const internalEdges: EdgeSpecV02[] = [];
-  const externalEdges: EdgeSpecV02[] = [];
+  const internalEdges: EdgeSpecV01[] = [];
+  const externalEdges: EdgeSpecV01[] = [];
 
   for (const edge of graph.edges) {
     const sourceSelected = selectedNodeIds.has(edge.source.nodeId);
@@ -290,9 +292,9 @@ export function createGraphFragmentFromSelection(
 }
 
 export function withGraphFragmentSourceMetadata(
-  fragment: GraphFragmentV02,
+  fragment: GraphFragmentV01,
   sourceMetadata: Record<string, unknown>
-): GraphFragmentV02 {
+): GraphFragmentV01 {
   return validateFragmentOrThrow(
     {
       ...fragment,
@@ -303,7 +305,7 @@ export function withGraphFragmentSourceMetadata(
 }
 
 export function createPasteGraphFragmentRequest(
-  options: CreatePasteGraphFragmentRequestOptionsV02
+  options: CreatePasteGraphFragmentRequestOptions
 ): PasteGraphFragmentRequest {
   const request: PasteGraphFragmentRequest = {
     target: options.target,
@@ -321,7 +323,7 @@ export function createPasteGraphFragmentRequest(
 }
 
 export function createPasteGraphFragmentOperation(
-  options: CreatePasteGraphFragmentOperationOptionsV02
+  options: CreatePasteGraphFragmentOperationOptions
 ): RuntimeOperationEnvelope {
   const operation: RuntimeOperationEnvelope = {
     schema: "skenion.runtime.operation",
@@ -344,7 +346,7 @@ export function createPasteGraphFragmentOperation(
 
 export function readPasteGraphFragmentResponse(
   response: unknown
-): PasteGraphFragmentResponseSummaryV02 {
+): PasteGraphFragmentResponseSummary {
   const validation = validatePasteGraphFragmentResponse(response);
   if (!validation.ok) {
     throw new SkenionPasteResponseError(validation.errors);

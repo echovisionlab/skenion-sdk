@@ -5,28 +5,29 @@ lifecycle, command APIs, and capability negotiation.
 
 The SDK is UI-framework agnostic and does not depend on React or Mantine.
 
-## Active Authoring Surface
+## Current Authoring Surface
 
-The primary SDK authoring surface targets Skenion graph v0.2 documents:
+The primary SDK authoring surface targets the current Skenion `0.1` graph,
+project, patch-library, graph-fragment, and package contracts:
 
-- `defineGraphDocument()` creates normalized v0.2 graph documents.
-- `definePatchDefinition()` and `definePatchLibrary()` create v0.2 patch
-  library entries.
-- `defineProjectDocument()` creates v0.2 project documents with a required
-  patch library.
+- `defineGraphDocument()` creates normalized current `0.1` graph documents.
+- `definePatchDefinition()` and `definePatchLibrary()` create current `0.1`
+  patch library entries.
+- `defineProjectDocument()` creates current `0.1` project documents.
 - `createGraphTargetRef()` and `patchPath.*` create Runtime graph targets for
   root graphs, project patches, package patches, embedded patch instances, and
   help working copies.
-- `createGraphFragment()` and `createGraphFragmentFromSelection()` create v0.2
-  graph fragments for clipboard, help, palette, and paste flows.
-- `defineNodeDefinition()` creates v0.2 node definition manifests using v0.2
-  ports.
+- `createGraphFragment()` and `createGraphFragmentFromSelection()` create
+  current `0.1` graph fragments for clipboard, help, palette, and paste flows.
+- `defineNodeDefinition()` creates current `0.1` node definition manifests.
+- `defineExtensionPackage()` creates current package manifests and rejects
+  unsupported Runtime ABI versions.
 - Runtime client helpers construct default-session and explicit-session URLs,
   validate session info/events, track replay cursors, and summarize sidecar
   startup/health capability metadata.
-- generated manifests are validated through `@skenion/contracts`.
-- script lifecycle typing exposes only `onInit`, `onInput`, `onEvent`, and
-  `onDispose`.
+- Generated documents and manifests are validated through `@skenion/contracts`.
+- Only current contract helper names are exported; unsupported versions are
+  rejected instead of adapted.
 
 Canonical examples:
 
@@ -56,7 +57,7 @@ const graph = defineGraphDocument({
     defineGraphNode({
       id: "value-1",
       kind: "core.value",
-      kindVersion: "0.2.0",
+      kindVersion: "0.1.0",
       params: { value: 0.5 },
       ports: [valueOut]
     })
@@ -82,42 +83,38 @@ const target = createGraphTargetRef({
 });
 ```
 
-## Legacy v0.1 Import And Migration
-
-The v0.1 helpers remain available only for legacy package import and migration
-work:
+Package manifests use the same current contract surface:
 
 ```ts
 import {
-  defineLegacyExtensionPackageV01,
-  defineLegacyNodeV01,
-  legacyT,
-  migrateLegacyProjectDocumentV01ToProject
+  defineExtensionPackage,
+  defineNodeDefinition,
+  definePort
 } from "@skenion/sdk";
 
-const value = defineLegacyNodeV01({
+const value = defineNodeDefinition({
   id: "core.value",
   version: "0.1.0",
   displayName: "Value",
   category: "Core",
-  ports: [{ id: "out", direction: "output", type: legacyT.value(legacyT.f32()) }],
+  ports: [
+    definePort({
+      id: "out",
+      direction: "output",
+      type: "number.float",
+      rate: "control"
+    })
+  ],
   execution: { model: "value" }
 });
 
-const manifest = defineLegacyExtensionPackageV01({
+const manifest = defineExtensionPackage({
   id: "skenion/core",
-  version: "0.1.0",
+  version: "0.55.0",
   kind: "core-package",
   nodes: [value]
 });
-
-const activeProject = migrateLegacyProjectDocumentV01ToProject(legacyProject);
 ```
-
-The historical `defineNode()`, `defineExtensionPackage()`, and `t.*` exports are
-deprecated aliases for the explicit legacy helpers. New collaboration,
-marketplace, clipboard, help, and Runtime paste helpers should use v0.2
-projects, patch paths, graph fragments, and `GraphTargetRef`.
 
 ## Runtime Session Helpers
 
@@ -163,24 +160,6 @@ const operation = createPasteGraphFragmentOperation({
   }
 });
 ```
-
-## GPU Texture Semantics
-
-Skenion v0.1 legacy helpers do not define a separate `gpu` flow. GPU-backed
-values are represented as resource-like typed handles in migration inputs.
-
-For example, `legacyT.gpu.texture2d()` emits:
-
-```ts
-{
-  flow: "resource",
-  dataKind: "gpu.texture2d"
-}
-```
-
-This means the graph carries a GPU resource handle, not CPU pixels. CPU/GPU
-crossing must be expressed through explicit converter nodes, such as video
-decode and texture upload nodes.
 
 ## Status
 

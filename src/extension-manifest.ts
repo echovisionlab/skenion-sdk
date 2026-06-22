@@ -11,7 +11,9 @@ import type {
   NodeDefinitionManifestV01
 } from "@skenion/contracts";
 
-export interface DefineLegacyExtensionPackageOptionsV01 {
+const CURRENT_SCHEMA_VERSION = "0.1.0";
+
+export interface DefineExtensionPackageOptions {
   id: string;
   version: string;
   kind: ExtensionKindV01;
@@ -27,9 +29,6 @@ export interface DefineLegacyExtensionPackageOptionsV01 {
   frontend?: ExtensionFrontendMetadataV01;
 }
 
-/** @deprecated Use DefineLegacyExtensionPackageOptionsV01 for v0.1 import/migration helpers only. */
-export interface DefineExtensionPackageOptions extends DefineLegacyExtensionPackageOptionsV01 {}
-
 export class SkenionExtensionManifestError extends Error {
   readonly errors: string[];
 
@@ -40,13 +39,23 @@ export class SkenionExtensionManifestError extends Error {
   }
 }
 
-export function defineLegacyExtensionPackageV01(options: DefineLegacyExtensionPackageOptionsV01): ExtensionManifestV01 {
+function requireCurrentVersion(field: string, value: string): void {
+  if (value !== CURRENT_SCHEMA_VERSION) {
+    throw new SkenionExtensionManifestError([
+      `${field} must be ${CURRENT_SCHEMA_VERSION}; received ${value}`
+    ]);
+  }
+}
+
+export function defineExtensionPackage(options: DefineExtensionPackageOptions): ExtensionManifestV01 {
+  requireCurrentVersion("runtimeAbiVersion", options.runtimeAbiVersion ?? CURRENT_SCHEMA_VERSION);
+
   const manifest: ExtensionManifestV01 = {
     schema: "skenion.extension.manifest",
-    schemaVersion: "0.1.0",
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     id: options.id,
     version: options.version,
-    runtimeAbiVersion: options.runtimeAbiVersion ?? "0.1.0",
+    runtimeAbiVersion: options.runtimeAbiVersion ?? CURRENT_SCHEMA_VERSION,
     kind: options.kind,
     provides: {
       nodes: [...(options.nodes ?? [])],
@@ -68,6 +77,3 @@ export function defineLegacyExtensionPackageV01(options: DefineLegacyExtensionPa
 
   return validation.value;
 }
-
-/** @deprecated v0.1 extension manifests are legacy import/migration helpers only. */
-export const defineExtensionPackage = defineLegacyExtensionPackageV01;

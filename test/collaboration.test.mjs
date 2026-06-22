@@ -45,7 +45,7 @@ const causal = createRuntimeCollaborationCausalMetadata({
 const node = {
   id: "node-1",
   kind: "core.value",
-  kindVersion: "0.2.0",
+  kindVersion: "0.1.0",
   params: {},
   ports: [
     {

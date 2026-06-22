@@ -21,17 +21,10 @@ export {
   runtimeCollaborationRebaseStrategies
 } from "./collaboration.js";
 export {
-  SkenionNodeDefinitionError,
-  defineLegacyNodeV01,
-  defineNode
-} from "./node-definition.js";
-export {
   SkenionExtensionManifestError,
-  defineLegacyExtensionPackageV01,
   defineExtensionPackage
 } from "./extension-manifest.js";
 export {
-  SkenionLegacyMigrationError,
   SkenionProjectAuthoringError,
   createDefaultViewStateForGraph,
   createGraphTargetRef,
@@ -44,12 +37,8 @@ export {
   defineProjectDocument,
   derivePatchContract,
   deriveProjectPatchContracts,
-  migrateLegacyGraphDocumentV01ToGraph,
-  migrateLegacyProjectDocumentV01ToProject,
   patchPath,
   readGraphDocument,
-  readLegacyGraphDocumentV01,
-  readLegacyProjectDocumentV01,
   readPatchDefinition,
   readProjectDocument
 } from "./project-authoring.js";
@@ -103,27 +92,26 @@ export type {
   RuntimeCollaborationOperationBaseOptions
 } from "./collaboration.js";
 export type {
-  DefineExtensionPackageOptions,
-  DefineLegacyExtensionPackageOptionsV01
+  DefineExtensionPackageOptions
 } from "./extension-manifest.js";
 export type {
-  CreateGraphTargetRefOptionsV02,
-  DefineGraphDocumentOptionsV02,
-  DefineGraphNodeOptionsV02,
-  DefineNodeDefinitionOptionsV02,
-  DefinePatchDefinitionOptionsV02,
-  DefinePortOptionsV02,
-  DefineProjectDocumentOptionsV02,
-  EmbeddedPatchPathOptionsV02,
-  HelpWorkingCopyPathOptionsV02,
-  PackagePatchPathOptionsV02
+  CreateGraphTargetRefOptions,
+  DefineGraphDocumentOptions,
+  DefineGraphNodeOptions,
+  DefineNodeDefinitionOptions,
+  DefinePatchDefinitionOptions,
+  DefinePortOptions,
+  DefineProjectDocumentOptions,
+  EmbeddedPatchPathOptions,
+  HelpWorkingCopyPathOptions,
+  PackagePatchPathOptions
 } from "./project-authoring.js";
 export type {
-  CreateGraphFragmentOptionsV02,
-  CreatePasteGraphFragmentOperationOptionsV02,
-  CreatePasteGraphFragmentRequestOptionsV02,
-  GraphFragmentSelectionOptionsV02,
-  PasteGraphFragmentResponseSummaryV02
+  CreateGraphFragmentOptions,
+  CreatePasteGraphFragmentOperationOptions,
+  CreatePasteGraphFragmentRequestOptions,
+  GraphFragmentSelectionOptions,
+  PasteGraphFragmentResponseSummary
 } from "./graph-fragment.js";
 export type {
   RuntimeClient,
@@ -143,23 +131,3 @@ export type {
   RuntimeSidecarStartupResponse,
   RuntimeSidecarTokenInfo
 } from "./runtime-client.js";
-export type {
-  DefineNodeOptions,
-  DefineLegacyNodeOptionsV01,
-  LegacyNodePortInputV01,
-  NodePortInput,
-  ScriptNodeLifecycle,
-  ScriptNodeRuntimeContext
-} from "./node-definition.js";
-export {
-  legacyT,
-  t
-} from "./type-builders.js";
-export type {
-  DataKindSpec,
-  LegacyDataKindSpecV01,
-  LegacyTypeConstraintsV01,
-  LegacyTypeInputV01,
-  TypeConstraints,
-  TypeInput
-} from "./type-builders.js";

@@ -79,7 +79,6 @@ const sessionInfo = {
   profile: localManagedProfile,
   capabilities: {
     sessionAddressing: true,
-    defaultSessionAlias: true,
     eventReplay: true,
     multiWindow: true,
     profiles: ["local-managed", "local-shared", "remote"],

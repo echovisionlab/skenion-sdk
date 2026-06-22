@@ -1,91 +1,83 @@
 import {
   createDefaultViewStateForGraph as createDefaultViewStateForGraphContract,
-  derivePatchContractV02,
-  derivePatchContractsV02,
+  derivePatchContractV01,
+  derivePatchContractsV01,
   validateGraphDocument,
-  validateGraphDocumentV02,
-  validateNodeDefinitionV02,
+  validateNodeDefinition,
   validatePasteGraphFragmentRequest,
-  validatePatchDefinitionV02,
+  validatePatchDefinitionV01,
   validateProjectDocument,
-  validateProjectDocumentV02
+  validateProjectDocumentV01
 } from "@skenion/contracts";
 import type {
-  CableStyleRegistryV02,
-  DataFlow,
-  EdgeSpecV02,
-  EdgeV01,
+  CableStyleRegistryV01,
+  EdgeSpecV01,
   GraphDocumentV01,
-  GraphDocumentV02,
+  GraphFragmentV01,
   GraphNodeV01,
-  GraphFragmentV02,
-  GraphNodeV02,
   GraphTargetRef,
-  NodeDefinitionManifestV02,
+  NodeDefinitionManifestV01,
   NodeExecutionV01,
   NodeStateV01,
   NodeSurfaceV01,
-  PatchContractV02,
-  PatchDefinitionV02,
+  PatchContractV01,
+  PatchDefinitionV01,
   PatchPath,
-  PortActivation,
-  PortGroupSpecV02,
-  PortRateV02,
-  PortSpecV02,
-  PortV01,
+  PortGroupSpecV01,
+  PortSpecV01,
   ProjectDocumentV01,
-  ProjectDocumentV02,
-  ProjectMetadataV02,
-  TriggerModeV02,
+  ProjectMetadataV01,
   ValidationResult,
   ViewStateV01
 } from "@skenion/contracts";
 
-export interface DefinePortOptionsV02 extends PortSpecV02 {}
+const CURRENT_SCHEMA_VERSION = "0.1.0";
 
-export interface DefineGraphNodeOptionsV02 {
+export interface DefinePortOptions extends PortSpecV01 {}
+
+export interface DefineGraphNodeOptions {
   id: string;
   kind: string;
   kindVersion?: string;
   params?: Record<string, unknown>;
-  ports?: PortSpecV02[];
-  portGroups?: PortGroupSpecV02[];
+  ports?: PortSpecV01[];
+  portGroups?: PortGroupSpecV01[];
 }
 
-export interface DefineGraphDocumentOptionsV02 {
+export interface DefineGraphDocumentOptions {
   id: string;
   revision: string;
-  nodes?: GraphNodeV02[];
-  edges?: EdgeSpecV02[];
-  cableStyles?: CableStyleRegistryV02;
+  nodes?: GraphNodeV01[];
+  edges?: EdgeSpecV01[];
+  cableStyles?: CableStyleRegistryV01;
 }
 
-export interface DefinePatchDefinitionOptionsV02 {
+export interface DefinePatchDefinitionOptions {
   id: string;
   revision: string;
-  graph: GraphDocumentV02;
-  metadata?: ProjectMetadataV02;
+  graph: GraphDocumentV01;
+  metadata?: ProjectMetadataV01;
   viewState?: ViewStateV01;
 }
 
-export interface DefineProjectDocumentOptionsV02 {
+export interface DefineProjectDocumentOptions {
   id: string;
   revision: string;
-  graph: GraphDocumentV02;
-  metadata?: ProjectMetadataV02;
+  graph: GraphDocumentV01;
+  metadata?: ProjectMetadataV01;
   viewState?: ViewStateV01;
-  patchLibrary?: PatchDefinitionV02[];
+  patchLibrary?: PatchDefinitionV01[];
   tutorial?: Record<string, unknown>;
   help?: Record<string, unknown>;
 }
 
-export interface DefineNodeDefinitionOptionsV02 {
+export interface DefineNodeDefinitionOptions {
   id: string;
   version: string;
   displayName: string;
   category: string;
-  ports?: PortSpecV02[];
-  portGroups?: PortGroupSpecV02[];
+  ports?: PortSpecV01[];
+  portGroups?: PortGroupSpecV01[];
   execution: NodeExecutionV01;
   state?: Partial<NodeStateV01>;
   permissions?: string[];
@@ -95,24 +87,24 @@ export interface DefineNodeDefinitionOptionsV02 {
   surface?: NodeSurfaceV01;
 }
 
-export interface CreateGraphTargetRefOptionsV02 {
+export interface CreateGraphTargetRefOptions {
   path?: PatchPath;
   baseRevision: string;
   targetRevision?: string;
 }
 
-export interface PackagePatchPathOptionsV02 {
+export interface PackagePatchPathOptions {
   packageId: string;
   patchId: string;
   version?: string;
 }
 
-export interface EmbeddedPatchPathOptionsV02 {
+export interface EmbeddedPatchPathOptions {
   ownerPath: string[];
   nodeId: string;
 }
 
-export interface HelpWorkingCopyPathOptionsV02 {
+export interface HelpWorkingCopyPathOptions {
   workingCopyId: string;
   sourcePackageId?: string;
   sourcePatchId?: string;
@@ -122,18 +114,8 @@ export class SkenionProjectAuthoringError extends Error {
   readonly errors: string[];
 
   constructor(errors: string[]) {
-    super(`Invalid Skenion v0.2 authoring value: ${errors.join("; ")}`);
+    super(`Invalid Skenion 0.1 authoring value: ${errors.join("; ")}`);
     this.name = "SkenionProjectAuthoringError";
-    this.errors = errors;
-  }
-}
-
-export class SkenionLegacyMigrationError extends Error {
-  readonly errors: string[];
-
-  constructor(errors: string[]) {
-    super(`Invalid legacy Skenion v0.1 import value: ${errors.join("; ")}`);
-    this.name = "SkenionLegacyMigrationError";
     this.errors = errors;
   }
 }
@@ -146,25 +128,13 @@ function readAuthoringValidation<T>(validation: ValidationResult<T>): T {
   return validation.value;
 }
 
-function readLegacyValidation<T>(validation: ValidationResult<T>): T {
-  if (!validation.ok) {
-    throw new SkenionLegacyMigrationError(validation.errors);
-  }
-
-  return validation.value;
-}
-
-function minimalGraphFragment(): GraphFragmentV02 {
+function minimalGraphFragment(): GraphFragmentV01 {
   return {
     schema: "skenion.graph.fragment",
-    schemaVersion: "0.2.0",
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     nodes: [],
     edges: []
   };
-}
-
-function cloneJson<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
 }
 
 function validatePatchPath(path: PatchPath): PatchPath {
@@ -174,149 +144,19 @@ function validatePatchPath(path: PatchPath): PatchPath {
   }).path;
 }
 
-function v02RateForLegacyFlow(flow: DataFlow, dataKind: string): PortRateV02 {
-  if (flow === "event") {
-    return "event";
+function requireCurrentVersion(field: string, value: string): void {
+  if (value !== CURRENT_SCHEMA_VERSION) {
+    throw new SkenionProjectAuthoringError([
+      `${field} must be ${CURRENT_SCHEMA_VERSION}; received ${value}`
+    ]);
   }
-  if (flow === "signal") {
-    return "audio";
-  }
-  if (flow === "stream") {
-    return "render";
-  }
-  if (flow === "resource" && dataKind.startsWith("gpu.")) {
-    return "gpu";
-  }
-  if (flow === "resource") {
-    return "resource";
-  }
-  return "control";
 }
 
-function v02TriggerModeForLegacyActivation(activation?: PortActivation): TriggerModeV02 | undefined {
-  if (activation === "trigger") {
-    return "trigger";
-  }
-  if (activation === "latched") {
-    return "latched";
-  }
-  return undefined;
-}
-
-function migrateLegacyPortToV02(port: PortV01): PortSpecV02 {
-  const nextPort: PortSpecV02 = {
-    id: port.id,
-    direction: port.direction,
-    type: port.type.dataKind,
-    rate: v02RateForLegacyFlow(port.type.flow, port.type.dataKind)
-  };
-
-  if (port.label !== undefined) {
-    nextPort.label = port.label;
-  }
-  if (port.default !== undefined) {
-    nextPort.defaultValue = cloneJson(port.default);
-  }
-  if (port.required !== undefined) {
-    nextPort.required = port.required;
-  }
-  const triggerMode = v02TriggerModeForLegacyActivation(port.activation);
-  if (triggerMode !== undefined) {
-    nextPort.triggerMode = triggerMode;
-  }
-
-  return nextPort;
-}
-
-function migrateLegacyNodeToV02(node: GraphNodeV01): GraphNodeV02 {
-  return {
-    id: node.id,
-    kind: node.kind,
-    kindVersion: node.kindVersion,
-    params: cloneJson(node.params),
-    ports: node.ports.map(migrateLegacyPortToV02)
-  };
-}
-
-function slugId(value: string): string {
-  return value.replace(/[^A-Za-z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "endpoint";
-}
-
-function legacyEdgeId(edge: EdgeV01, index: number, usedIds: Set<string>): string {
-  const base = [
-    "edge",
-    slugId(edge.from.node),
-    slugId(edge.from.port),
-    "to",
-    slugId(edge.to.node),
-    slugId(edge.to.port)
-  ].join("_");
-  let candidate = base;
-  let suffix = index + 1;
-  while (usedIds.has(candidate)) {
-    candidate = `${base}_${suffix}`;
-    suffix += 1;
-  }
-  usedIds.add(candidate);
-  return candidate;
-}
-
-function migrateLegacyEdgeToV02(edge: EdgeV01, index: number, usedIds: Set<string>): EdgeSpecV02 {
-  return {
-    id: legacyEdgeId(edge, index, usedIds),
-    source: {
-      nodeId: edge.from.node,
-      portId: edge.from.port
-    },
-    target: {
-      nodeId: edge.to.node,
-      portId: edge.to.port
-    }
-  };
-}
-
-function migrateLegacyGraphDocumentToV02(graph: GraphDocumentV01): GraphDocumentV02 {
-  const usedEdgeIds = new Set<string>();
-
-  return {
-    schema: "skenion.graph",
-    schemaVersion: "0.2.0",
-    id: graph.id,
-    revision: graph.revision,
-    nodes: graph.nodes.map(migrateLegacyNodeToV02),
-    edges: graph.edges.map((edge, index) => migrateLegacyEdgeToV02(edge, index, usedEdgeIds))
-  };
-}
-
-function migrateLegacyProjectDocumentToV02(project: ProjectDocumentV01): ProjectDocumentV02 {
-  const nextProject: ProjectDocumentV02 = {
-    schema: "skenion.project",
-    schemaVersion: "0.2.0",
-    id: project.id,
-    revision: project.revision,
-    graph: migrateLegacyGraphDocumentToV02(project.graph),
-    viewState: cloneJson(project.viewState),
-    patchLibrary: []
-  };
-
-  if (project.metadata !== undefined) {
-    nextProject.metadata = cloneJson(project.metadata);
-  }
-  if (project.tutorial !== undefined) {
-    nextProject.tutorial = cloneJson(project.tutorial);
-  }
-  if (project.help !== undefined) {
-    nextProject.help = cloneJson(project.help);
-  }
-
-  return nextProject;
-}
-
-function validateNodePortsForAuthoring(node: GraphNodeV02): void {
+function validateNodePortsForAuthoring(node: GraphNodeV01): void {
   readAuthoringValidation(
-    validateNodeDefinitionV02({
+    validateNodeDefinition({
       schema: "skenion.node.definition",
-      schemaVersion: "0.2.0",
+      schemaVersion: CURRENT_SCHEMA_VERSION,
       id: node.id,
       version: node.kindVersion,
       displayName: node.kind,
@@ -335,8 +175,8 @@ function validateNodePortsForAuthoring(node: GraphNodeV02): void {
   );
 }
 
-export function definePort(options: DefinePortOptionsV02): PortSpecV02 {
-  const port: PortSpecV02 = {
+export function definePort(options: DefinePortOptions): PortSpecV01 {
+  const port: PortSpecV01 = {
     ...options,
     ...(options.accepts === undefined ? {} : { accepts: [...options.accepts] })
   };
@@ -350,11 +190,14 @@ export function definePort(options: DefinePortOptionsV02): PortSpecV02 {
   return port;
 }
 
-export function defineGraphNode(options: DefineGraphNodeOptionsV02): GraphNodeV02 {
-  const node: GraphNodeV02 = {
+export function defineGraphNode(options: DefineGraphNodeOptions): GraphNodeV01 {
+  const kindVersion = options.kindVersion ?? CURRENT_SCHEMA_VERSION;
+  requireCurrentVersion("kindVersion", kindVersion);
+
+  const node: GraphNodeV01 = {
     id: options.id,
     kind: options.kind,
-    kindVersion: options.kindVersion ?? "0.2.0",
+    kindVersion,
     params: { ...(options.params ?? {}) },
     ports: [...(options.ports ?? [])],
     ...(options.portGroups === undefined ? {} : { portGroups: [...options.portGroups] })
@@ -365,10 +208,10 @@ export function defineGraphNode(options: DefineGraphNodeOptionsV02): GraphNodeV0
   return node;
 }
 
-export function defineGraphDocument(options: DefineGraphDocumentOptionsV02): GraphDocumentV02 {
-  const graph: GraphDocumentV02 = {
+export function defineGraphDocument(options: DefineGraphDocumentOptions): GraphDocumentV01 {
+  const graph: GraphDocumentV01 = {
     schema: "skenion.graph",
-    schemaVersion: "0.2.0",
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     id: options.id,
     revision: options.revision,
     nodes: [...(options.nodes ?? [])],
@@ -379,8 +222,8 @@ export function defineGraphDocument(options: DefineGraphDocumentOptionsV02): Gra
   return readGraphDocument(graph);
 }
 
-export function definePatchDefinition(options: DefinePatchDefinitionOptionsV02): PatchDefinitionV02 {
-  const patch: PatchDefinitionV02 = {
+export function definePatchDefinition(options: DefinePatchDefinitionOptions): PatchDefinitionV01 {
+  const patch: PatchDefinitionV01 = {
     id: options.id,
     revision: options.revision,
     graph: options.graph,
@@ -391,7 +234,7 @@ export function definePatchDefinition(options: DefinePatchDefinitionOptionsV02):
   return readPatchDefinition(patch);
 }
 
-export function definePatchLibrary(patches: PatchDefinitionV02[] = []): PatchDefinitionV02[] {
+export function definePatchLibrary(patches: PatchDefinitionV01[] = []): PatchDefinitionV01[] {
   const library = patches.map((patch) => readPatchDefinition(patch));
   const seen = new Set<string>();
   const duplicateIds: string[] = [];
@@ -412,10 +255,10 @@ export function definePatchLibrary(patches: PatchDefinitionV02[] = []): PatchDef
   return library;
 }
 
-export function defineProjectDocument(options: DefineProjectDocumentOptionsV02): ProjectDocumentV02 {
-  const project: ProjectDocumentV02 = {
+export function defineProjectDocument(options: DefineProjectDocumentOptions): ProjectDocumentV01 {
+  const project: ProjectDocumentV01 = {
     schema: "skenion.project",
-    schemaVersion: "0.2.0",
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     id: options.id,
     revision: options.revision,
     graph: options.graph,
@@ -429,10 +272,15 @@ export function defineProjectDocument(options: DefineProjectDocumentOptionsV02):
   return readProjectDocument(project);
 }
 
-export function defineNodeDefinition(options: DefineNodeDefinitionOptionsV02): NodeDefinitionManifestV02 {
-  const definition: NodeDefinitionManifestV02 = {
+export function defineNodeDefinition(options: DefineNodeDefinitionOptions): NodeDefinitionManifestV01 {
+  requireCurrentVersion("version", options.version);
+  if (options.scriptApiVersion !== undefined) {
+    requireCurrentVersion("scriptApiVersion", options.scriptApiVersion);
+  }
+
+  const definition: NodeDefinitionManifestV01 = {
     schema: "skenion.node.definition",
-    schemaVersion: "0.2.0",
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     id: options.id,
     version: options.version,
     displayName: options.displayName,
@@ -450,34 +298,34 @@ export function defineNodeDefinition(options: DefineNodeDefinitionOptionsV02): N
     ...(options.surface === undefined ? {} : { surface: { ...options.surface } })
   };
 
-  return readAuthoringValidation(validateNodeDefinitionV02(definition));
+  return readAuthoringValidation(validateNodeDefinition(definition));
 }
 
-export function readGraphDocument(document: unknown): GraphDocumentV02 {
-  return readAuthoringValidation(validateGraphDocumentV02(document));
+export function readGraphDocument(document: unknown): GraphDocumentV01 {
+  return readAuthoringValidation(validateGraphDocument(document));
 }
 
-export function readPatchDefinition(document: unknown): PatchDefinitionV02 {
-  return readAuthoringValidation(validatePatchDefinitionV02(document));
+export function readPatchDefinition(document: unknown): PatchDefinitionV01 {
+  return readAuthoringValidation(validatePatchDefinitionV01(document));
 }
 
-export function readProjectDocument(document: unknown): ProjectDocumentV02 {
-  return readAuthoringValidation(validateProjectDocumentV02(document));
+export function readProjectDocument(document: unknown): ProjectDocumentV01 {
+  return readAuthoringValidation(validateProjectDocumentV01(document));
 }
 
-export function createDefaultViewStateForGraph(graph: GraphDocumentV02): ViewStateV01 {
+export function createDefaultViewStateForGraph(graph: GraphDocumentV01): ViewStateV01 {
   return createDefaultViewStateForGraphContract(graph);
 }
 
-export function derivePatchContract(patch: PatchDefinitionV02): PatchContractV02 {
-  return derivePatchContractV02(readPatchDefinition(patch));
+export function derivePatchContract(patch: PatchDefinitionV01): PatchContractV01 {
+  return derivePatchContractV01(readPatchDefinition(patch));
 }
 
-export function deriveProjectPatchContracts(project: ProjectDocumentV02): PatchContractV02[] {
-  return derivePatchContractsV02(readProjectDocument(project));
+export function deriveProjectPatchContracts(project: ProjectDocumentV01): PatchContractV01[] {
+  return derivePatchContractsV01(readProjectDocument(project));
 }
 
-export function createGraphTargetRef(options: CreateGraphTargetRefOptionsV02): GraphTargetRef {
+export function createGraphTargetRef(options: CreateGraphTargetRefOptions): GraphTargetRef {
   const target: GraphTargetRef = {
     path: options.path ?? { kind: "root" },
     baseRevision: options.baseRevision,
@@ -499,20 +347,20 @@ export const patchPath = {
   root: (): PatchPath => validatePatchPath({ kind: "root" }),
   projectPatch: (patchId: string): PatchPath =>
     validatePatchPath({ kind: "project-patch-definition", patchId }),
-  packagePatch: (options: PackagePatchPathOptionsV02): PatchPath =>
+  packagePatch: (options: PackagePatchPathOptions): PatchPath =>
     validatePatchPath({
       kind: "package-patch-definition",
       packageId: options.packageId,
       patchId: options.patchId,
       ...(options.version === undefined ? {} : { version: options.version })
     }),
-  embeddedPatch: (options: EmbeddedPatchPathOptionsV02): PatchPath =>
+  embeddedPatch: (options: EmbeddedPatchPathOptions): PatchPath =>
     validatePatchPath({
       kind: "embedded-patch-instance",
       ownerPath: [...options.ownerPath],
       nodeId: options.nodeId
     }),
-  helpWorkingCopy: (options: HelpWorkingCopyPathOptionsV02): PatchPath =>
+  helpWorkingCopy: (options: HelpWorkingCopyPathOptions): PatchPath =>
     validatePatchPath({
       kind: "help-working-copy",
       workingCopyId: options.workingCopyId,
@@ -520,19 +368,3 @@ export const patchPath = {
       ...(options.sourcePatchId === undefined ? {} : { sourcePatchId: options.sourcePatchId })
     })
 } as const;
-
-export function readLegacyGraphDocumentV01(document: unknown): GraphDocumentV01 {
-  return readLegacyValidation(validateGraphDocument(document));
-}
-
-export function readLegacyProjectDocumentV01(document: unknown): ProjectDocumentV01 {
-  return readLegacyValidation(validateProjectDocument(document));
-}
-
-export function migrateLegacyGraphDocumentV01ToGraph(document: unknown): GraphDocumentV02 {
-  return readGraphDocument(migrateLegacyGraphDocumentToV02(readLegacyGraphDocumentV01(document)));
-}
-
-export function migrateLegacyProjectDocumentV01ToProject(document: unknown): ProjectDocumentV02 {
-  return readProjectDocument(migrateLegacyProjectDocumentToV02(readLegacyProjectDocumentV01(document)));
-}

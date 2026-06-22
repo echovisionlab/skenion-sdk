@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  SkenionLegacyMigrationError,
   SkenionProjectAuthoringError,
   SkenionRuntimeCollaborationError,
   createDefaultViewStateForGraph,
@@ -17,12 +16,8 @@ import {
   defineProjectDocument,
   derivePatchContract,
   deriveProjectPatchContracts,
-  migrateLegacyGraphDocumentV01ToGraph,
-  migrateLegacyProjectDocumentV01ToProject,
   patchPath,
   readGraphDocument,
-  readLegacyGraphDocumentV01,
-  readLegacyProjectDocumentV01,
   readPatchDefinition,
   readProjectDocument
 } from "../dist/index.js";
@@ -64,7 +59,7 @@ const inletNode = defineGraphNode({
 const outletNode = defineGraphNode({
   id: "patch.outlet",
   kind: "core.outlet",
-  kindVersion: "0.2.0",
+  kindVersion: "0.1.0",
   params: {
     portId: "scaled",
     label: "Scaled"
@@ -96,14 +91,14 @@ const patchEdge = {
 const rootValueNode = defineGraphNode({
   id: "root.value",
   kind: "core.value",
-  kindVersion: "0.2.0",
+  kindVersion: "0.1.0",
   params: {
     value: 0.5
   },
   ports: [valueOutPort]
 });
 
-test("active v0.2 helpers build graph, patch library, project, and patch contracts", () => {
+test("current 0.1 helpers build graph, patch library, project, and patch contracts", () => {
   const emptyGraph = defineGraphDocument({
     id: "graph.empty",
     revision: "rev-empty"
@@ -145,10 +140,10 @@ test("active v0.2 helpers build graph, patch library, project, and patch contrac
   });
   const library = definePatchLibrary([patch, patchWithDefaultView]);
   const project = defineProjectDocument({
-    id: "project.active",
+    id: "project.current",
     revision: "rev-project-1",
     metadata: {
-      title: "Active v0.2 Project",
+      title: "Current 0.1 Project",
       updatedAt: "2026-06-22T00:00:00.000Z"
     },
     graph: rootGraph,
@@ -163,11 +158,11 @@ test("active v0.2 helpers build graph, patch library, project, and patch contrac
   });
 
   assert.equal(emptyGraph.nodes.length, 0);
-  assert.equal(readGraphDocument(rootGraph).schemaVersion, "0.2.0");
+  assert.equal(readGraphDocument(rootGraph).schemaVersion, "0.1.0");
   assert.equal(readPatchDefinition(patch).viewState, explicitPatchView);
   assert.equal(patchWithDefaultView.viewState?.canvas.nodes["patch.inlet"].x, 96);
   assert.equal(readProjectDocument(project).patchLibrary.length, 2);
-  assert.equal(project.metadata?.title, "Active v0.2 Project");
+  assert.equal(project.metadata?.title, "Current 0.1 Project");
   assert.equal(project.tutorial?.step, 1);
   assert.equal(project.help?.readonly, true);
 
@@ -182,14 +177,14 @@ test("active v0.2 helpers build graph, patch library, project, and patch contrac
   ]);
 });
 
-test("active v0.2 node-definition helper uses v0.2 ports and rejects invalid definitions", () => {
+test("current 0.1 node-definition helper validates ports and strict versions", () => {
   const emptyGraphNode = defineGraphNode({
     id: "core.empty",
     kind: "core.empty"
   });
   const minimal = defineNodeDefinition({
     id: "core.value",
-    version: "0.2.0",
+    version: "0.1.0",
     displayName: "Value",
     category: "Core",
     execution: {
@@ -203,7 +198,7 @@ test("active v0.2 node-definition helper uses v0.2 ports and rejects invalid def
   });
   const full = defineNodeDefinition({
     id: "script.scale",
-    version: "0.2.0",
+    version: "0.1.0",
     displayName: "Scale",
     category: "Script",
     ports: [valueInPort, valueOutPort],
@@ -224,8 +219,8 @@ test("active v0.2 node-definition helper uses v0.2 ports and rejects invalid def
       persistent: true
     },
     permissions: [],
-    capabilities: ["script.api.v0.2"],
-    scriptApiVersion: "0.2.0",
+    capabilities: ["script.api.v0.1"],
+    scriptApiVersion: "0.1.0",
     bundleHash: "sha256:1111111111111111111111111111111111111111111111111111111111111111",
     surface: {
       palette: "direct"
@@ -233,7 +228,7 @@ test("active v0.2 node-definition helper uses v0.2 ports and rejects invalid def
   });
 
   assert.deepEqual(emptyGraphNode.ports, []);
-  assert.equal(minimal.schemaVersion, "0.2.0");
+  assert.equal(minimal.schemaVersion, "0.1.0");
   assert.equal(minimal.state.persistent, false);
   assert.equal(stateDefault.state.persistent, false);
   assert.equal(full.ports[0].type, "number.float");
@@ -256,9 +251,34 @@ test("active v0.2 node-definition helper uses v0.2 ports and rejects invalid def
       }),
     SkenionProjectAuthoringError
   );
+  assert.throws(
+    () =>
+      defineGraphNode({
+        id: "core.old",
+        kind: "core.old",
+        kindVersion: "0.2.0"
+      }),
+    SkenionProjectAuthoringError
+  );
+  assert.throws(
+    () =>
+      defineNodeDefinition({
+        ...minimal,
+        version: "0.2.0"
+      }),
+    SkenionProjectAuthoringError
+  );
+  assert.throws(
+    () =>
+      defineNodeDefinition({
+        ...minimal,
+        scriptApiVersion: "0.2.0"
+      }),
+    SkenionProjectAuthoringError
+  );
 });
 
-test("Runtime graph target helpers create v0.2 PatchPath targets and reject legacy target shapes", () => {
+test("Runtime graph target helpers create current PatchPath targets and reject old target shapes", () => {
   const rootTarget = createGraphTargetRef({
     baseRevision: "rev-root-1"
   });
@@ -274,7 +294,7 @@ test("Runtime graph target helpers create v0.2 PatchPath targets and reject lega
   const versionedPackagePatch = patchPath.packagePatch({
     packageId: "skenion/core",
     patchId: "help.scale",
-    version: "0.38.0"
+    version: "0.55.0"
   });
   const embeddedPatch = patchPath.embeddedPatch({
     ownerPath: ["root"],
@@ -314,7 +334,7 @@ test("Runtime graph target helpers create v0.2 PatchPath targets and reject lega
   assert.equal(projectPatchTarget.targetRevision, "rev-patch-2");
   assert.equal(packagePatch.kind, "package-patch-definition");
   assert.equal("version" in packagePatch, false);
-  assert.equal(versionedPackagePatch.version, "0.38.0");
+  assert.equal(versionedPackagePatch.version, "0.55.0");
   assert.equal(embeddedPatch.kind, "embedded-patch-instance");
   assert.equal(helpCopy.sourcePackageId, "skenion/core");
   assert.equal("sourcePackageId" in anonymousHelpCopy, false);
@@ -323,7 +343,7 @@ test("Runtime graph target helpers create v0.2 PatchPath targets and reject lega
   assert.throws(
     () =>
       createGraphTargetRef({
-        path: { graphId: "legacy.graph" },
+        path: { graphId: "old.graph" },
         baseRevision: "rev-1"
       }),
     SkenionProjectAuthoringError
@@ -343,11 +363,11 @@ test("Runtime graph target helpers create v0.2 PatchPath targets and reject lega
   assert.throws(
     () =>
       createRuntimeCollaborationChangeSetOperation({
-        operationId: "op-legacy-target",
+        operationId: "op-old-target",
         sessionId: "session-a",
         participantId: "participant-a",
         causal,
-        target: { graphId: "legacy.graph", baseRevision: "rev-1" },
+        target: { graphId: "old.graph", baseRevision: "rev-1" },
         changes: [],
         submittedAt: "2026-06-22T00:00:02.000Z"
       }),
@@ -355,297 +375,30 @@ test("Runtime graph target helpers create v0.2 PatchPath targets and reject lega
   );
 });
 
-test("legacy v0.1 imports are migration-only and active readers reject them", () => {
-  const legacyGraph = {
-    schema: "skenion.graph",
-    schemaVersion: "0.1.0",
-    id: "legacy.graph",
-    revision: "legacy-rev-1",
-    nodes: [
-      {
-        id: "legacy.value",
-        kind: "core.value",
-        kindVersion: "0.1.0",
-        params: {
-          value: 1
-        },
-        ports: [
-          {
-            id: "out",
-            direction: "output",
-            label: "Value Out",
-            default: {
-              value: 1
-            },
-            required: false,
-            type: {
-              flow: "value",
-              dataKind: "number.f32"
-            }
-          },
-          {
-            id: "event",
-            direction: "output",
-            type: {
-              flow: "event",
-              dataKind: "bang"
-            }
-          },
-          {
-            id: "signal",
-            direction: "output",
-            type: {
-              flow: "signal",
-              dataKind: "number.f32"
-            }
-          },
-          {
-            id: "stream",
-            direction: "output",
-            type: {
-              flow: "stream",
-              dataKind: "asset.video"
-            }
-          },
-          {
-            id: "gpu",
-            direction: "output",
-            type: {
-              flow: "resource",
-              dataKind: "gpu.texture2d"
-            }
-          },
-          {
-            id: "asset",
-            direction: "output",
-            type: {
-              flow: "resource",
-              dataKind: "asset.video"
-            }
-          }
-        ]
-      },
-      {
-        id: "legacy.sink",
-        kind: "core.sink",
-        kindVersion: "0.1.0",
-        params: {},
-        ports: [
-          {
-            id: "in",
-            direction: "input",
-            activation: "latched",
-            type: {
-              flow: "value",
-              dataKind: "number.f32"
-            }
-          },
-          {
-            id: "bang",
-            direction: "input",
-            activation: "trigger",
-            type: {
-              flow: "event",
-              dataKind: "bang"
-            }
-          }
-        ]
-      },
-      {
-        id: "legacy_value",
-        kind: "core.value",
-        kindVersion: "0.1.0",
-        params: {},
-        ports: [
-          {
-            id: "out",
-            direction: "output",
-            type: {
-              flow: "value",
-              dataKind: "number.f32"
-            }
-          }
-        ]
-      },
-      {
-        id: "legacy_sink",
-        kind: "core.sink",
-        kindVersion: "0.1.0",
-        params: {},
-        ports: [
-          {
-            id: "in",
-            direction: "input",
-            type: {
-              flow: "value",
-              dataKind: "number.f32"
-            }
-          }
-        ]
-      },
-      {
-        id: "!!!",
-        kind: "core.slug-source",
-        kindVersion: "0.1.0",
-        params: {},
-        ports: [
-          {
-            id: "###",
-            direction: "output",
-            type: {
-              flow: "value",
-              dataKind: "number.f32"
-            }
-          }
-        ]
-      },
-      {
-        id: "???",
-        kind: "core.slug-target",
-        kindVersion: "0.1.0",
-        params: {},
-        ports: [
-          {
-            id: "$$$",
-            direction: "input",
-            type: {
-              flow: "value",
-              dataKind: "number.f32"
-            }
-          }
-        ]
-      }
-    ],
-    edges: [
-      {
-        from: { node: "legacy.value", port: "out" },
-        to: { node: "legacy.sink", port: "in" }
-      },
-      {
-        from: { node: "legacy_value", port: "out" },
-        to: { node: "legacy_sink", port: "in" }
-      },
-      {
-        from: { node: "!!!", port: "###" },
-        to: { node: "???", port: "$$$" }
-      }
-    ]
-  };
-  const legacyProject = {
-    schema: "skenion.project",
-    schemaVersion: "0.1.0",
-    id: "legacy.project",
-    revision: "legacy-rev-1",
-    metadata: {
-      title: "Legacy Project"
-    },
-    graph: legacyGraph,
-    viewState: {
-      schema: "skenion.view-state",
-      schemaVersion: "0.1.0",
-      canvas: {
-        nodes: {
-          "legacy.value": {
-            x: 10,
-            y: 20
-          },
-          "legacy.sink": {
-            x: 120,
-            y: 20
-          },
-          "legacy_value": {
-            x: 10,
-            y: 70
-          },
-          "legacy_sink": {
-            x: 120,
-            y: 70
-          },
-          "!!!": {
-            x: 10,
-            y: 120
-          },
-          "???": {
-            x: 120,
-            y: 120
-          }
-        },
-        viewport: {
-          x: 0,
-          y: 0,
-          zoom: 1
-        }
-      }
-    },
-    tutorial: {
-      legacy: true
-    },
-    help: {
-      markdownPath: "help/legacy.md"
-    }
-  };
-  const migratedGraph = migrateLegacyGraphDocumentV01ToGraph(legacyGraph);
-  const migratedProject = migrateLegacyProjectDocumentV01ToProject(legacyProject);
-  const minimalMigratedProject = migrateLegacyProjectDocumentV01ToProject({
-    schema: "skenion.project",
-    schemaVersion: "0.1.0",
-    id: "legacy.minimal",
-    revision: "legacy-rev-minimal",
-    graph: legacyGraph,
-    viewState: legacyProject.viewState
+test("current readers reject unsupported graph and project schema versions", () => {
+  const graph = defineGraphDocument({
+    id: "graph.valid",
+    revision: "rev-valid",
+    nodes: [rootValueNode],
+    edges: []
   });
-  const migratedValuePorts = Object.fromEntries(
-    migratedGraph.nodes[0].ports.map((port) => [port.id, port])
-  );
-  const migratedSinkPorts = Object.fromEntries(
-    migratedGraph.nodes[1].ports.map((port) => [port.id, port])
-  );
-
-  assert.equal(readLegacyGraphDocumentV01(legacyGraph).schemaVersion, "0.1.0");
-  assert.equal(readLegacyProjectDocumentV01(legacyProject).schemaVersion, "0.1.0");
-  assert.equal(migratedGraph.schemaVersion, "0.2.0");
-  assert.equal(migratedValuePorts.out.type, "number.f32");
-  assert.equal(migratedValuePorts.out.rate, "control");
-  assert.equal(migratedValuePorts.out.label, "Value Out");
-  assert.deepEqual(migratedValuePorts.out.defaultValue, { value: 1 });
-  assert.equal(migratedValuePorts.out.required, false);
-  assert.equal(migratedValuePorts.event.rate, "event");
-  assert.equal(migratedValuePorts.signal.rate, "audio");
-  assert.equal(migratedValuePorts.stream.rate, "render");
-  assert.equal(migratedValuePorts.gpu.rate, "gpu");
-  assert.equal(migratedValuePorts.asset.rate, "resource");
-  assert.equal(migratedSinkPorts.in.triggerMode, "latched");
-  assert.equal(migratedSinkPorts.bang.triggerMode, "trigger");
-  assert.deepEqual(migratedGraph.edges.map((edge) => edge.id), [
-    "edge_legacy_value_out_to_legacy_sink_in",
-    "edge_legacy_value_out_to_legacy_sink_in_2",
-    "edge_endpoint_endpoint_to_endpoint_endpoint"
-  ]);
-  assert.equal(migratedProject.schemaVersion, "0.2.0");
-  assert.deepEqual(migratedProject.patchLibrary, []);
-  assert.deepEqual(minimalMigratedProject.patchLibrary, []);
-  assert.equal("metadata" in minimalMigratedProject, false);
-  assert.equal(readProjectDocument(migratedProject).metadata?.title, "Legacy Project");
+  const project = defineProjectDocument({
+    id: "project.valid",
+    revision: "rev-valid",
+    graph
+  });
 
   assert.throws(
-    () => readProjectDocument(legacyProject),
+    () => readGraphDocument({ ...graph, schemaVersion: "0.2.0" }),
     SkenionProjectAuthoringError
   );
   assert.throws(
-    () => readLegacyProjectDocumentV01(migratedProject),
-    SkenionLegacyMigrationError
-  );
-  assert.throws(
-    () => readLegacyGraphDocumentV01({ ...legacyGraph, id: "" }),
-    SkenionLegacyMigrationError
-  );
-  assert.throws(
-    () => migrateLegacyProjectDocumentV01ToProject({ ...legacyProject, graph: { ...legacyGraph, id: "" } }),
-    SkenionLegacyMigrationError
+    () => readProjectDocument({ ...project, schemaVersion: "0.2.0" }),
+    SkenionProjectAuthoringError
   );
 });
 
-test("active v0.2 helpers reject invalid graph, patch, project, and patch-library inputs", () => {
+test("current helpers reject invalid graph, patch, project, and patch-library inputs", () => {
   const validGraph = defineGraphDocument({
     id: "graph.valid",
     revision: "rev-valid",

@@ -18,7 +18,7 @@ function node(id, portId, direction) {
   return {
     id,
     kind: "core.value",
-    kindVersion: "0.2.0",
+    kindVersion: "0.1.0",
     params: {},
     ports: [
       {
@@ -34,7 +34,7 @@ const sourceNode = node("source", "out", "output");
 const middleNode = {
   id: "middle",
   kind: "core.scale",
-  kindVersion: "0.2.0",
+  kindVersion: "0.1.0",
   params: {},
   ports: [
     {
@@ -64,7 +64,7 @@ const externalEdge = {
 
 const graph = {
   schema: "skenion.graph",
-  schemaVersion: "0.2.0",
+  schemaVersion: "0.1.0",
   id: "graph.main",
   revision: "rev-1",
   nodes: [sourceNode, middleNode, targetNode],
@@ -415,7 +415,7 @@ test("analyzeGraphFragment returns diagnostics without throwing", () => {
   const result = analyzeGraphFragment(
     {
       schema: "skenion.graph.fragment",
-      schemaVersion: "0.2.0",
+      schemaVersion: "0.1.0",
       nodes: [middleNode],
       edges: [externalEdge]
     },
