@@ -55,9 +55,32 @@ jobs:
             exit 1
           fi
 
+          echo "release-version=${RELEASE_AS}" >> "${GITHUB_OUTPUT}"
           echo "publish=true" >> "${GITHUB_OUTPUT}"
-      - uses: googleapis/release-please-action@v5
+
+      - name: Create GitHub releases
+        uses: googleapis/release-please-action@v5
         if: steps.train.outputs.publish == 'true'
         with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          skip-github-pull-request: true
+          target-branch: main
           token: ${{ secrets.SKENION_RELEASE_PLEASE_TOKEN || secrets.CI_TOKEN }}
-          release-as: ${{ inputs['release-as'] }}
+
+      - name: Create or update train release PR
+        if: steps.train.outputs.publish == 'true'
+        shell: bash
+        env:
+          RELEASE_PLEASE_TOKEN: ${{ secrets.SKENION_RELEASE_PLEASE_TOKEN || secrets.CI_TOKEN }}
+          RELEASE_VERSION: ${{ steps.train.outputs.release-version }}
+        run: |
+          set -euo pipefail
+
+          npm exec --yes --package release-please@17.9.0 -- release-please release-pr \
+            --repo-url "${GITHUB_REPOSITORY}" \
+            --target-branch main \
+            --config-file release-please-config.json \
+            --manifest-file .release-please-manifest.json \
+            --release-as "${RELEASE_VERSION}" \
+            --token "${RELEASE_PLEASE_TOKEN}"
