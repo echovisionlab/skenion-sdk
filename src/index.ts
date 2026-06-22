@@ -80,6 +80,11 @@ export {
   summarizeRuntimeConnectionProfile,
   summarizeRuntimeSidecarCapabilities
 } from "./runtime-client.js";
+export {
+  SkenionReleaseTrainManifestError,
+  readReleaseTrainManifest,
+  validateReleaseTrainManifestForSdk
+} from "./release-train.js";
 export type {
   CreateRuntimeCollaborationCausalMetadataOptions,
   CreateRuntimeCollaborationChangeSetOperationOptions,
@@ -131,3 +136,10 @@ export type {
   RuntimeSidecarStartupResponse,
   RuntimeSidecarTokenInfo
 } from "./runtime-client.js";
+export type {
+  ReleaseTrainDiagnostic,
+  ReleaseTrainDiagnosticCode,
+  ReleaseTrainDiagnosticComponent,
+  ReleaseTrainManifestValidationResult,
+  ValidateReleaseTrainManifestOptions
+} from "./release-train.js";
