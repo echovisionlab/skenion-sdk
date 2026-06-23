@@ -29,14 +29,21 @@ becoming a separate contract source of truth. Prefer helpers that consume
 `@skenion/contracts` exports and produce current-version packages, patch
 libraries, manifests, and extension scaffolds.
 
-## Lockstep Release Train
+## Component Releases And Compatibility Matrices
 
-Skenion releasable packages and applications use lockstep product SemVer during
-v0. If the product train is `0.55`, SDK npm packages publish as `0.55.0` where
-the registry requires patch SemVer, and Runtime/contracts/studio/docs artifacts
-must belong to that same train. Do not create an independent SDK version stream.
+Release Please owns natural component releases for this repository. The hub
+verifies and promotes compatibility matrices; it does not conduct component
+releases or require SDK, Contracts, Runtime, Studio, docs, and examples to
+publish the same product version. SDK release work must declare the Contracts
+compatibility line it supports: supporting Contracts `0.45` means supporting
+`>=0.45.0 <0.46.0`, while SDK may release at its own component version.
 Publishing must happen only through GitHub Actions release workflows and Release
 Please, not local npm publishing.
+
+Workflows that need cross-repository or release automation credentials must use
+the organization Actions secret `GH_TOKEN`. Do not add `RELEASE_PLEASE_TOKEN`,
+`SKENION_RELEASE_TRAIN_TOKEN`, or default Actions-token fallbacks for release,
+compatibility-matrix, artifact-verification, or promotion workflows.
 
 ## Manager, Worker, And Review Gate Defaults
 
