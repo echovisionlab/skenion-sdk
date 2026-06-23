@@ -81,10 +81,11 @@ export {
   summarizeRuntimeSidecarCapabilities
 } from "./runtime-client.js";
 export {
-  SkenionReleaseTrainManifestError,
-  readReleaseTrainManifest,
-  validateReleaseTrainManifestForSdk
-} from "./release-train.js";
+  SDK_SUPPORTED_CONTRACTS_RANGE,
+  SkenionCompatibilityMatrixError,
+  readCompatibilityMatrixForSdk,
+  validateCompatibilityMatrixForSdk
+} from "./compatibility-matrix.js";
 export type {
   CreateRuntimeCollaborationCausalMetadataOptions,
   CreateRuntimeCollaborationChangeSetOperationOptions,
@@ -137,9 +138,9 @@ export type {
   RuntimeSidecarTokenInfo
 } from "./runtime-client.js";
 export type {
-  ReleaseTrainDiagnostic,
-  ReleaseTrainDiagnosticCode,
-  ReleaseTrainDiagnosticComponent,
-  ReleaseTrainManifestValidationResult,
-  ValidateReleaseTrainManifestOptions
-} from "./release-train.js";
+  CompatibilityMatrixDiagnostic,
+  CompatibilityMatrixDiagnosticCode,
+  CompatibilityMatrixDiagnosticComponent,
+  CompatibilityMatrixValidationResult,
+  ValidateCompatibilityMatrixForSdkOptions
+} from "./compatibility-matrix.js";

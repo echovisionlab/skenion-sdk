@@ -21,9 +21,14 @@ jobs:
         id: contracts
         shell: bash
         run: |
+          set -euo pipefail
+
           branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
           if git ls-remote --exit-code --heads https://github.com/skenion/skenion-contracts.git "refs/heads/${branch}" >/dev/null; then
             ref="${branch}"
+          elif [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "::notice::No matching skenion-contracts branch for ${branch}; using main for PR CI."
+            ref="main"
           else
             ref="main"
           fi
@@ -45,5 +50,21 @@ jobs:
         working-directory: .deps/skenion-contracts
       - run: pnpm run build
         working-directory: .deps/skenion-contracts
+      - name: Validate SDK Contracts peer range
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+          const expected = ">=0.45.0 <0.46.0";
+          const actual = pkg.peerDependencies?.["@skenion/contracts"];
+          if (actual !== expected) {
+            console.error(`@skenion/contracts peer dependency must be ${expected}; received ${actual ?? "<missing>"}`);
+            process.exit(1);
+          }
+          NODE
       - run: pnpm install --frozen-lockfile
       - run: pnpm run ci

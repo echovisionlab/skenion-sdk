@@ -1,21 +1,10 @@
 name: Release Please
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      release-as:
-        description: Exact SemVer version to release, for example 0.43.0.
-        required: true
-        type: string
-      train-version:
-        description: Lockstep train version. Must match release-as.
-        required: true
-        type: string
-      release-train-mode:
-        description: Release train mode. Only publish runs Release Please.
-        required: false
-        default: publish
-        type: string
 
 permissions:
   contents: write
@@ -29,58 +18,10 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - id: train
-        name: Validate release train inputs
-        shell: bash
-        env:
-          RELEASE_AS: ${{ inputs['release-as'] }}
-          TRAIN_VERSION: ${{ inputs['train-version'] }}
-          RELEASE_TRAIN_MODE: ${{ inputs['release-train-mode'] }}
-        run: |
-          set -euo pipefail
-
-          if [[ "${RELEASE_TRAIN_MODE}" != "publish" ]]; then
-            echo "::notice::release-train-mode=${RELEASE_TRAIN_MODE}; skipping Release Please for non-publish train mode."
-            echo "publish=false" >> "${GITHUB_OUTPUT}"
-            exit 0
-          fi
-
-          if [[ "${RELEASE_AS}" != "${TRAIN_VERSION}" ]]; then
-            echo "release-as (${RELEASE_AS}) must match train-version (${TRAIN_VERSION})" >&2
-            exit 1
-          fi
-
-          if ! [[ "${RELEASE_AS}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
-            echo "release-as (${RELEASE_AS}) must be SemVer-like x.y.z" >&2
-            exit 1
-          fi
-
-          echo "release-version=${RELEASE_AS}" >> "${GITHUB_OUTPUT}"
-          echo "publish=true" >> "${GITHUB_OUTPUT}"
-
-      - name: Create GitHub releases
+      - name: Run Release Please
         uses: googleapis/release-please-action@v5
-        if: steps.train.outputs.publish == 'true'
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          skip-github-pull-request: true
           target-branch: main
-          token: ${{ secrets.SKENION_RELEASE_TRAIN_TOKEN || github.token }}
-
-      - name: Create or update train release PR
-        if: steps.train.outputs.publish == 'true'
-        shell: bash
-        env:
-          RELEASE_PLEASE_TOKEN: ${{ secrets.SKENION_RELEASE_TRAIN_TOKEN || github.token }}
-          RELEASE_VERSION: ${{ steps.train.outputs.release-version }}
-        run: |
-          set -euo pipefail
-
-          npm exec --yes --package release-please@17.9.0 -- release-please release-pr \
-            --repo-url "${GITHUB_REPOSITORY}" \
-            --target-branch main \
-            --config-file release-please-config.json \
-            --manifest-file .release-please-manifest.json \
-            --release-as "${RELEASE_VERSION}" \
-            --token "${RELEASE_PLEASE_TOKEN}"
+          token: ${{ secrets.GH_TOKEN }}

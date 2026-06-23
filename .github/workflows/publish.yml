@@ -10,6 +10,11 @@ on:
         description: Release tag to publish, for example skenion-sdk-v0.3.1
         required: true
         type: string
+      matrix:
+        description: Compatibility matrix JSON path in the release checkout, URL, or release asset name.
+        required: false
+        default: compatibility-matrix.json
+        type: string
 
 permissions:
   contents: read
@@ -22,6 +27,7 @@ concurrency:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+  CONTRACTS_RANGE: ">=0.45.0 <0.46.0"
 
 jobs:
   npm:
@@ -29,8 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.event.release.tag_name || inputs.tag, 'skenion-sdk-v')
     steps:
-      - id: train
-        name: Resolve release train version
+      - id: release
+        name: Resolve SDK release version
         shell: bash
         run: |
           set -euo pipefail
@@ -41,13 +47,13 @@ jobs:
             exit 1
           fi
 
-          train_version="${RELEASE_TAG#${prefix}}"
-          if ! [[ "${train_version}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
-            echo "release train version ${train_version} must be SemVer-like x.y.z" >&2
+          sdk_version="${RELEASE_TAG#${prefix}}"
+          if ! [[ "${sdk_version}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "SDK release version ${sdk_version} must be SemVer-like x.y.z" >&2
             exit 1
           fi
 
-          echo "version=${train_version}" >> "${GITHUB_OUTPUT}"
+          echo "version=${sdk_version}" >> "${GITHUB_OUTPUT}"
       - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.release.tag_name || inputs.tag }}
@@ -60,31 +66,30 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
       - id: package
-        name: Validate package train versions
+        name: Validate package metadata
         shell: bash
         env:
-          TRAIN_VERSION: ${{ steps.train.outputs.version }}
+          SDK_VERSION: ${{ steps.release.outputs.version }}
         run: |
           set -euo pipefail
 
           node <<'NODE'
           const fs = require("node:fs");
 
-          const trainVersion = process.env.TRAIN_VERSION;
+          const sdkVersion = process.env.SDK_VERSION;
+          const contractsRange = process.env.CONTRACTS_RANGE;
           const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
           const peer = pkg.peerDependencies?.["@skenion/contracts"];
           const errors = [];
 
-          if (pkg.version !== trainVersion) {
-            errors.push(`package version ${pkg.version} must match release train ${trainVersion}`);
+          if (pkg.version !== sdkVersion) {
+            errors.push(`package version ${pkg.version} must match SDK release tag ${sdkVersion}`);
           }
 
-          if (peer !== trainVersion) {
-            const broadPeer = typeof peer === "string" && /[\^~*xX<>=| ]/.test(peer);
-            const detail = broadPeer
-              ? `broad peer dependency ${peer} is not allowed for release publishing`
-              : `peer dependency ${peer ?? "<missing>"} must exactly match release train ${trainVersion}`;
-            errors.push(`@skenion/contracts ${detail}`);
+          if (peer !== contractsRange) {
+            errors.push(
+              `@skenion/contracts peer dependency ${peer ?? "<missing>"} must be ${contractsRange}`
+            );
           }
 
           if (errors.length > 0) {
@@ -95,33 +100,146 @@ jobs:
           }
           NODE
 
-          echo "version=${TRAIN_VERSION}" >> "${GITHUB_OUTPUT}"
-      - name: Verify released contracts package
+          echo "version=${SDK_VERSION}" >> "${GITHUB_OUTPUT}"
+      - id: matrix-source
+        name: Resolve compatibility matrix evidence
         shell: bash
         env:
-          TRAIN_VERSION: ${{ steps.train.outputs.version }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          MATRIX_SOURCE: ${{ inputs.matrix || 'compatibility-matrix.json' }}
         run: |
           set -euo pipefail
 
-          actual="$(npm view "@skenion/contracts@${TRAIN_VERSION}" version)"
-          if [[ "${actual}" != "${TRAIN_VERSION}" ]]; then
-            echo "npm resolved @skenion/contracts@${TRAIN_VERSION} to ${actual}" >&2
+          source="${MATRIX_SOURCE:-compatibility-matrix.json}"
+          work_dir=".skenion-publish"
+          asset_dir="${work_dir}/assets"
+          matrix_path="${work_dir}/compatibility-matrix.json"
+          mkdir -p "${asset_dir}"
+
+          if [[ "${source}" =~ ^https?:// ]]; then
+            curl -fsSL "${source}" -o "${matrix_path}"
+          elif [[ -f "${source}" ]]; then
+            cp "${source}" "${matrix_path}"
+          else
+            asset_name="$(basename "${source}")"
+            echo "::notice::Compatibility matrix ${source} not found in checkout; trying release asset ${asset_name} from ${RELEASE_TAG}."
+            if gh release download "${RELEASE_TAG}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --pattern "${asset_name}" \
+              --dir "${asset_dir}" \
+              --clobber; then
+              cp "${asset_dir}/${asset_name}" "${matrix_path}"
+            fi
+          fi
+
+          if [[ ! -f "${matrix_path}" ]]; then
+            echo "Compatibility matrix evidence is required. Provide ${source} in the release checkout, as a URL, or as a release asset." >&2
             exit 1
           fi
-      - name: Use released contracts package
+
+          echo "path=${matrix_path}" >> "${GITHUB_OUTPUT}"
+      - id: matrix
+        name: Validate compatibility matrix evidence
         shell: bash
         env:
-          TRAIN_VERSION: ${{ steps.train.outputs.version }}
+          MATRIX_PATH: ${{ steps.matrix-source.outputs.path }}
+          SDK_VERSION: ${{ steps.package.outputs.version }}
         run: |
           set -euo pipefail
 
           node <<'NODE'
           const fs = require("node:fs");
 
-          const trainVersion = process.env.TRAIN_VERSION;
+          const matrixPath = process.env.MATRIX_PATH;
+          const expectedContractsRange = process.env.CONTRACTS_RANGE;
+          const sdkVersion = process.env.SDK_VERSION;
+          const matrix = JSON.parse(fs.readFileSync(matrixPath, "utf8"));
+          const errors = [];
+
+          function satisfiesV0CompatibilityRange(version, range) {
+            const versionMatch = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(version);
+            const rangeMatch = /^>=(0|[1-9]\d*)\.(0|[1-9]\d*)\.0 <(0|[1-9]\d*)\.(0|[1-9]\d*)\.0$/.exec(range);
+            if (!versionMatch || !rangeMatch) {
+              return false;
+            }
+
+            const versionMajor = Number(versionMatch[1]);
+            const versionMinor = Number(versionMatch[2]);
+            const lowerMajor = Number(rangeMatch[1]);
+            const lowerMinor = Number(rangeMatch[2]);
+            const upperMajor = Number(rangeMatch[3]);
+            const upperMinor = Number(rangeMatch[4]);
+
+            return (
+              versionMajor === 0 &&
+              lowerMajor === 0 &&
+              upperMajor === 0 &&
+              upperMinor === lowerMinor + 1 &&
+              versionMinor === lowerMinor
+            );
+          }
+
+          const contractsNpm = matrix.components?.contracts?.npm;
+          const sdkNpm = matrix.components?.sdk?.npm;
+          const sdkSupportedRange = matrix.components?.sdk?.["supported-contracts-range"];
+
+          if (matrix.schema !== "skenion.compatibility-matrix" || matrix["schema-version"] !== "0.1.0") {
+            errors.push("matrix must be skenion.compatibility-matrix 0.1.0");
+          }
+          if (matrix["contracts-range"] !== expectedContractsRange) {
+            errors.push(`matrix contracts-range must be ${expectedContractsRange}; received ${matrix["contracts-range"] ?? "<missing>"}`);
+          }
+          if (sdkSupportedRange !== matrix["contracts-range"]) {
+            errors.push(`matrix SDK supported-contracts-range must match contracts-range; received ${sdkSupportedRange ?? "<missing>"}`);
+          }
+          if (contractsNpm?.ecosystem !== "npm" || contractsNpm?.name !== "@skenion/contracts") {
+            errors.push("matrix components.contracts.npm must identify @skenion/contracts on npm");
+          }
+          if (sdkNpm?.ecosystem !== "npm" || sdkNpm?.name !== "@skenion/sdk") {
+            errors.push("matrix components.sdk.npm must identify @skenion/sdk on npm");
+          }
+          if (sdkNpm?.version !== sdkVersion) {
+            errors.push(`matrix SDK npm version must match this package release ${sdkVersion}; received ${sdkNpm?.version ?? "<missing>"}`);
+          }
+          if (!satisfiesV0CompatibilityRange(contractsNpm?.version ?? "", expectedContractsRange)) {
+            errors.push(`matrix Contracts npm version ${contractsNpm?.version ?? "<missing>"} must satisfy ${expectedContractsRange}`);
+          }
+
+          if (errors.length > 0) {
+            for (const error of errors) {
+              console.error(error);
+            }
+            process.exit(1);
+          }
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `contracts_version=${contractsNpm.version}\n`);
+          NODE
+      - name: Verify released contracts package
+        shell: bash
+        env:
+          CONTRACTS_VERSION: ${{ steps.matrix.outputs.contracts_version }}
+        run: |
+          set -euo pipefail
+
+          actual="$(npm view "@skenion/contracts@${CONTRACTS_VERSION}" version)"
+          if [[ "${actual}" != "${CONTRACTS_VERSION}" ]]; then
+            echo "npm resolved @skenion/contracts@${CONTRACTS_VERSION} to ${actual}" >&2
+            exit 1
+          fi
+      - name: Use released contracts package
+        shell: bash
+        env:
+          CONTRACTS_VERSION: ${{ steps.matrix.outputs.contracts_version }}
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const contractsVersion = process.env.CONTRACTS_VERSION;
           const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
           pkg.devDependencies ??= {};
-          pkg.devDependencies["@skenion/contracts"] = trainVersion;
+          pkg.devDependencies["@skenion/contracts"] = contractsVersion;
           fs.writeFileSync("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
           NODE
       - run: pnpm install --no-frozen-lockfile
