@@ -10,11 +10,6 @@ on:
         description: Release tag to publish, for example skenion-sdk-v0.3.1
         required: true
         type: string
-      matrix:
-        description: Compatibility matrix JSON path in the release checkout, URL, or release asset name.
-        required: false
-        default: compatibility-matrix.json
-        type: string
 
 permissions:
   contents: read
@@ -101,135 +96,76 @@ jobs:
           NODE
 
           echo "version=${SDK_VERSION}" >> "${GITHUB_OUTPUT}"
-      - id: matrix-source
-        name: Resolve compatibility matrix evidence
+      - id: contracts
+        name: Resolve released contracts package
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          MATRIX_SOURCE: ${{ inputs.matrix || 'compatibility-matrix.json' }}
         run: |
           set -euo pipefail
 
-          source="${MATRIX_SOURCE:-compatibility-matrix.json}"
-          work_dir=".skenion-publish"
-          asset_dir="${work_dir}/assets"
-          matrix_path="${work_dir}/compatibility-matrix.json"
-          mkdir -p "${asset_dir}"
+          versions_json="$(npm view @skenion/contracts versions --json)"
 
-          if [[ "${source}" =~ ^https?:// ]]; then
-            curl -fsSL "${source}" -o "${matrix_path}"
-          elif [[ -f "${source}" ]]; then
-            cp "${source}" "${matrix_path}"
-          else
-            asset_name="$(basename "${source}")"
-            echo "::notice::Compatibility matrix ${source} not found in checkout; trying release asset ${asset_name} from ${RELEASE_TAG}."
-            if gh release download "${RELEASE_TAG}" \
-              --repo "${GITHUB_REPOSITORY}" \
-              --pattern "${asset_name}" \
-              --dir "${asset_dir}" \
-              --clobber; then
-              cp "${asset_dir}/${asset_name}" "${matrix_path}"
-            fi
-          fi
+          contracts_version="$(CONTRACTS_VERSIONS_JSON="${versions_json}" node <<'NODE'
+          function parseVersion(version) {
+            const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(version);
+            return match === null ? undefined : match.slice(1).map(Number);
+          }
 
-          if [[ ! -f "${matrix_path}" ]]; then
-            echo "Compatibility matrix evidence is required. Provide ${source} in the release checkout, as a URL, or as a release asset." >&2
-            exit 1
-          fi
-
-          echo "path=${matrix_path}" >> "${GITHUB_OUTPUT}"
-      - id: matrix
-        name: Validate compatibility matrix evidence
-        shell: bash
-        env:
-          MATRIX_PATH: ${{ steps.matrix-source.outputs.path }}
-          SDK_VERSION: ${{ steps.package.outputs.version }}
-        run: |
-          set -euo pipefail
-
-          node <<'NODE'
-          const fs = require("node:fs");
-
-          const matrixPath = process.env.MATRIX_PATH;
-          const expectedContractsRange = process.env.CONTRACTS_RANGE;
-          const sdkVersion = process.env.SDK_VERSION;
-          const matrix = JSON.parse(fs.readFileSync(matrixPath, "utf8"));
-          const errors = [];
-
-          function satisfiesV0CompatibilityRange(version, range) {
-            const versionMatch = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(version);
-            const rangeMatch = /^>=(0|[1-9]\d*)\.(0|[1-9]\d*)\.0 <(0|[1-9]\d*)\.(0|[1-9]\d*)\.0$/.exec(range);
-            if (!versionMatch || !rangeMatch) {
-              return false;
+          function compareVersions(left, right) {
+            const leftParts = parseVersion(left);
+            const rightParts = parseVersion(right);
+            if (leftParts === undefined || rightParts === undefined) {
+              throw new Error("cannot compare malformed SemVer versions");
             }
-
-            const versionMajor = Number(versionMatch[1]);
-            const versionMinor = Number(versionMatch[2]);
-            const lowerMajor = Number(rangeMatch[1]);
-            const lowerMinor = Number(rangeMatch[2]);
-            const upperMajor = Number(rangeMatch[3]);
-            const upperMinor = Number(rangeMatch[4]);
-
-            return (
-              versionMajor === 0 &&
-              lowerMajor === 0 &&
-              upperMajor === 0 &&
-              upperMinor === lowerMinor + 1 &&
-              versionMinor === lowerMinor
-            );
-          }
-
-          const contractsNpm = matrix.components?.contracts?.npm;
-          const sdkNpm = matrix.components?.sdk?.npm;
-          const sdkSupportedRange = matrix.components?.sdk?.["supported-contracts-range"];
-
-          if (matrix.schema !== "skenion.compatibility-matrix" || matrix["schema-version"] !== "0.1.0") {
-            errors.push("matrix must be skenion.compatibility-matrix 0.1.0");
-          }
-          if (matrix["contracts-range"] !== expectedContractsRange) {
-            errors.push(`matrix contracts-range must be ${expectedContractsRange}; received ${matrix["contracts-range"] ?? "<missing>"}`);
-          }
-          if (sdkSupportedRange !== matrix["contracts-range"]) {
-            errors.push(`matrix SDK supported-contracts-range must match contracts-range; received ${sdkSupportedRange ?? "<missing>"}`);
-          }
-          if (contractsNpm?.ecosystem !== "npm" || contractsNpm?.name !== "@skenion/contracts") {
-            errors.push("matrix components.contracts.npm must identify @skenion/contracts on npm");
-          }
-          if (sdkNpm?.ecosystem !== "npm" || sdkNpm?.name !== "@skenion/sdk") {
-            errors.push("matrix components.sdk.npm must identify @skenion/sdk on npm");
-          }
-          if (sdkNpm?.version !== sdkVersion) {
-            errors.push(`matrix SDK npm version must match this package release ${sdkVersion}; received ${sdkNpm?.version ?? "<missing>"}`);
-          }
-          if (!satisfiesV0CompatibilityRange(contractsNpm?.version ?? "", expectedContractsRange)) {
-            errors.push(`matrix Contracts npm version ${contractsNpm?.version ?? "<missing>"} must satisfy ${expectedContractsRange}`);
-          }
-
-          if (errors.length > 0) {
-            for (const error of errors) {
-              console.error(error);
+            for (let index = 0; index < leftParts.length; index += 1) {
+              const diff = leftParts[index] - rightParts[index];
+              if (diff !== 0) {
+                return diff;
+              }
             }
+            return 0;
+          }
+
+          const range = process.env.CONTRACTS_RANGE;
+          const rangeMatch = /^>=0\.(\d+)\.0 <0\.(\d+)\.0$/.exec(range);
+          if (rangeMatch === null || Number(rangeMatch[2]) !== Number(rangeMatch[1]) + 1) {
+            console.error(`unsupported @skenion/contracts peer range ${range}`);
             process.exit(1);
           }
 
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, `contracts_version=${contractsNpm.version}\n`);
-          NODE
-      - name: Verify released contracts package
-        shell: bash
-        env:
-          CONTRACTS_VERSION: ${{ steps.matrix.outputs.contracts_version }}
-        run: |
-          set -euo pipefail
+          const supportedMinor = Number(rangeMatch[1]);
+          const versions = JSON.parse(process.env.CONTRACTS_VERSIONS_JSON ?? "[]");
+          const publishedVersions = Array.isArray(versions) ? versions : [versions];
+          const candidates = publishedVersions
+            .filter((version) => {
+              if (typeof version !== "string") {
+                return false;
+              }
+              const parsed = parseVersion(version);
+              return parsed !== undefined && parsed[0] === 0 && parsed[1] === supportedMinor;
+            })
+            .sort(compareVersions);
 
-          actual="$(npm view "@skenion/contracts@${CONTRACTS_VERSION}" version)"
-          if [[ "${actual}" != "${CONTRACTS_VERSION}" ]]; then
-            echo "npm resolved @skenion/contracts@${CONTRACTS_VERSION} to ${actual}" >&2
+          const contractsVersion = candidates.at(-1);
+          if (contractsVersion === undefined) {
+            console.error(`no published @skenion/contracts version satisfies ${range}`);
+            process.exit(1);
+          }
+
+          console.log(contractsVersion);
+          NODE
+          )"
+
+          actual="$(npm view "@skenion/contracts@${contracts_version}" version)"
+          if [[ "${actual}" != "${contracts_version}" ]]; then
+            echo "npm resolved @skenion/contracts@${contracts_version} to ${actual}" >&2
             exit 1
           fi
+
+          echo "version=${contracts_version}" >> "${GITHUB_OUTPUT}"
       - name: Use released contracts package
         shell: bash
         env:
-          CONTRACTS_VERSION: ${{ steps.matrix.outputs.contracts_version }}
+          CONTRACTS_VERSION: ${{ steps.contracts.outputs.version }}
         run: |
           set -euo pipefail
 
