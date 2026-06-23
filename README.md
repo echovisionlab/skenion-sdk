@@ -26,8 +26,8 @@ project, patch-library, graph-fragment, and package contracts:
   validate session info/events, track replay cursors, and summarize sidecar
   startup/health capability metadata.
 - Compatibility matrix helpers validate `skenion.compatibility-matrix` `0.1.0`
-  documents for SDK publish and promotion checks, including the SDK-supported
-  Contracts range and installed Contracts package evidence.
+  documents for promotion checks, including the SDK-supported Contracts range
+  and installed Contracts package evidence.
 - Generated documents and manifests are validated through `@skenion/contracts`.
 - Only current contract helper names are exported; unsupported versions are
   rejected instead of adapted.
