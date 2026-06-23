@@ -2,7 +2,14 @@
   "release-type": "node",
   "packages": {
     ".": {
-      "package-name": "skenion-sdk"
+      "package-name": "skenion-sdk",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "package.json",
+          "jsonpath": "$['peerDependencies']['@skenion/contracts']"
+        }
+      ]
     }
   }
 }
