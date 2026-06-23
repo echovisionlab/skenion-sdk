@@ -38,7 +38,7 @@ function artifact(idPrefix, kind, target, nameSuffix, repository, tag) {
   return {
     id: `${idPrefix}-${target}`,
     target,
-    supportTier: releaseBlockingTargets.has(target) ? "release-blocking" : "preview",
+    "support-tier": releaseBlockingTargets.has(target) ? "release-blocking" : "preview",
     kind,
     name,
     version: trainVersion,
@@ -46,14 +46,14 @@ function artifact(idPrefix, kind, target, nameSuffix, repository, tag) {
       kind: "github-release-asset",
       repository,
       tag,
-      assetName: name,
+      "asset-name": name,
       url: null
     },
     checksum: {
       algorithm: "sha256",
       value: null
     },
-    sizeBytes: null
+    "size-bytes": null
   };
 }
 
@@ -67,14 +67,14 @@ function staticArtifact(id, kind, name, repository, tag) {
       kind: "github-release-asset",
       repository,
       tag,
-      assetName: name,
+      "asset-name": name,
       url: null
     },
     checksum: {
       algorithm: "sha256",
       value: null
     },
-    sizeBytes: null
+    "size-bytes": null
   };
 }
 
@@ -95,7 +95,7 @@ function desktopPackageMap(repository, tag) {
       const entry = artifact("studio-desktop", "studio-desktop-package", target, "tar.gz", repository, tag);
       const name = desktopArchiveName(target);
       entry.name = name;
-      entry.source.assetName = name;
+      entry.source["asset-name"] = name;
       return [target, entry];
     })
   );
@@ -136,56 +136,56 @@ function validTrainManifest() {
 
   return {
     schema: "skenion.release-train",
-    schemaVersion: "0.1.0",
-    trainId,
-    trainVersion,
-    protocolBaselines: {
+    "schema-version": "0.1.0",
+    "train-id": trainId,
+    "train-version": trainVersion,
+    "protocol-baselines": {
       graph: "0.1",
       project: "0.1",
       node: "0.1",
       extension: "0.1",
-      runtimeHttp: "v0",
-      runtimeCollaboration: "v0"
+      "runtime-http": "v0",
+      "runtime-collaboration": "v0"
     },
-    capabilitySet: {
-      protocolSurfaces: {
+    "capability-set": {
+      "protocol-surfaces": {
         graph: "0.1",
         project: "0.1",
         node: "0.1",
         extension: "0.1",
-        runtimeHttp: "v0",
-        runtimeCollaboration: "v0"
+        "runtime-http": "v0",
+        "runtime-collaboration": "v0"
       },
       runtime: {
-        sessionAddressing: true,
-        eventReplay: true,
-        multiWindow: true,
-        connectionProfiles: ["local-managed", "local-shared", "remote"],
+        "session-addressing": true,
+        "event-replay": true,
+        "multi-window": true,
+        "connection-profiles": ["local-managed", "local-shared", "remote"],
         collaboration: "server-authoritative-ot",
-        operationLog: true,
-        ioDiscovery: "raw-descriptor",
-        authPolicy: "deferred"
+        "operation-log": true,
+        "io-discovery": "raw-descriptor",
+        "auth-policy": "deferred"
       },
       studio: {
-        graphEditor: true,
-        patchLibrary: true,
+        "graph-editor": true,
+        "patch-library": true,
         subpatches: true,
-        livingHelp: true,
-        graphClipboard: true,
-        desktopShell: "tauri",
-        connectionProfiles: ["local-managed", "local-shared", "remote"]
+        "living-help": true,
+        "graph-clipboard": true,
+        "desktop-shell": "tauri",
+        "connection-profiles": ["local-managed", "local-shared", "remote"]
       },
       marketplace: {
-        packageDiscovery: true,
-        packageInstall: true,
-        packageUpdate: true,
-        extensionPackages: true
+        "package-discovery": true,
+        "package-install": true,
+        "package-update": true,
+        "extension-packages": true
       },
       manual: {
-        versionedPaths: true,
-        pagesDeployment: true,
-        latestPromotionRequiresMatrix: true,
-        patchReleasesUseMajorMinorPath: true
+        "versioned-paths": true,
+        "pages-deployment": true,
+        "latest-promotion-requires-matrix": true,
+        "patch-releases-use-major-minor-path": true
       }
     },
     components: {
@@ -201,8 +201,8 @@ function validTrainManifest() {
       },
       studio: {
         "web-bundle": webBundle,
-        desktopPackages: studioPackages,
-        runtimeSidecars: studioSidecars
+        "desktop-packages": studioPackages,
+        "runtime-sidecars": studioSidecars
       },
       examples: {
         repository: "skenion/skenion-examples",
@@ -214,39 +214,39 @@ function validTrainManifest() {
         manual: {
           version: trainVersion,
           path: "/manual/0.43/",
-          pagesUrl: "https://skenion.github.io/skenion-docs/manual/0.43/"
+          "pages-url": "https://skenion.github.io/skenion-docs/manual/0.43/"
         }
       }
     },
-    releaseGates: {
-      registryPackages: {
-        contractsNpm: {
+    "release-gates": {
+      "registry-packages": {
+        "contracts-npm": {
           id: "contracts-npm-exists",
           status: "pending",
           required: true,
           package: registryPackage("npm", "@skenion/contracts")
         },
-        contractsCrate: {
+        "contracts-crate": {
           id: "contracts-crate-exists",
           status: "pending",
           required: true,
           package: registryPackage("crates.io", "skenion-contracts")
         },
-        sdkNpm: {
+        "sdk-npm": {
           id: "sdk-npm-exists",
           status: "pending",
           required: true,
           package: registryPackage("npm", "@skenion/sdk")
         }
       },
-      githubReleaseAssets: {
+      "github-release-assets": {
         runtime: {
           id: "runtime-release-assets",
           status: "pending",
           required: true,
           repository: "skenion/skenion-runtime",
           tag: "skenion-runtime-v0.43.0",
-          artifactIds: runtimeArtifactIds
+          "artifact-ids": runtimeArtifactIds
         },
         studio: {
           id: "studio-release-assets",
@@ -254,16 +254,16 @@ function validTrainManifest() {
           required: true,
           repository: "skenion/skenion-studio",
           tag: "skenion-studio-v0.43.0",
-          artifactIds: studioArtifactIds
+          "artifact-ids": studioArtifactIds
         }
       },
-      checksumVerification: {
+      "checksum-verification": {
         id: "artifact-checksums",
         status: "pending",
         required: true,
-        artifactIds: [...runtimeArtifactIds, ...studioArtifactIds]
+        "artifact-ids": [...runtimeArtifactIds, ...studioArtifactIds]
       },
-      runtimeSmoke: Object.fromEntries(
+      "runtime-smoke": Object.fromEntries(
         targets.map((target) => [
           target,
           {
@@ -271,11 +271,11 @@ function validTrainManifest() {
             status: "pending",
             required: true,
             target,
-            artifactId: runtimeBinaries[target].id
+            "artifact-id": runtimeBinaries[target].id
           }
         ])
       ),
-      studioPackageSmoke: Object.fromEntries(
+      "studio-package-smoke": Object.fromEntries(
         targets.map((target) => [
           target,
           {
@@ -283,12 +283,12 @@ function validTrainManifest() {
             status: "pending",
             required: true,
             target,
-            desktopPackageArtifactId: studioPackages[target].id,
-            runtimeSidecarArtifactId: studioSidecars[target].id
+            "desktop-package-artifact-id": studioPackages[target].id,
+            "runtime-sidecar-artifact-id": studioSidecars[target].id
           }
         ])
       ),
-      examplesConformance: {
+      "examples-conformance": {
         id: "examples-conformance",
         status: "pending",
         required: true,
@@ -296,13 +296,13 @@ function validTrainManifest() {
         ref: "skenion-examples-v0.43.0",
         version: trainVersion
       },
-      docsPagesDeployment: {
+      "docs-pages-deployment": {
         id: "docs-pages-deployment",
         status: "pending",
         required: true,
-        manualVersion: trainVersion,
-        manualPath: "/manual/0.43/",
-        pagesUrl: "https://skenion.github.io/skenion-docs/manual/0.43/"
+        "manual-version": trainVersion,
+        "manual-path": "/manual/0.43/",
+        "pages-url": "https://skenion.github.io/skenion-docs/manual/0.43/"
       }
     }
   };
@@ -320,30 +320,30 @@ function removedRegistrySurfaceManifest() {
   manifest.components.studio.desktop = registryPackage("npm", "@skenion/studio-desktop");
   delete manifest.components.studio["web-bundle"];
 
-  manifest.releaseGates.registryPackages[removedRuntimeGateKey] = {
+  manifest["release-gates"]["registry-packages"][removedRuntimeGateKey] = {
     id: "runtime-crate-exists",
     status: "pending",
     required: true,
     package: registryPackage("crates.io", "skenion-runtime")
   };
-  manifest.releaseGates.registryPackages[removedWebGateKey] = {
+  manifest["release-gates"]["registry-packages"][removedWebGateKey] = {
     id: "studio-web-exists",
     status: "pending",
     required: true,
     package: registryPackage("npm", "@skenion/studio-web")
   };
-  manifest.releaseGates.registryPackages[removedDesktopGateKey] = {
+  manifest["release-gates"]["registry-packages"][removedDesktopGateKey] = {
     id: "studio-desktop-exists",
     status: "pending",
     required: true,
     package: registryPackage("npm", "@skenion/studio-desktop")
   };
-  manifest.releaseGates.githubReleaseAssets.studio.artifactIds =
-    manifest.releaseGates.githubReleaseAssets.studio.artifactIds.filter(
+  manifest["release-gates"]["github-release-assets"].studio["artifact-ids"] =
+    manifest["release-gates"]["github-release-assets"].studio["artifact-ids"].filter(
       (artifactId) => artifactId !== "studio-web-bundle"
     );
-  manifest.releaseGates.checksumVerification.artifactIds =
-    manifest.releaseGates.checksumVerification.artifactIds.filter(
+  manifest["release-gates"]["checksum-verification"]["artifact-ids"] =
+    manifest["release-gates"]["checksum-verification"]["artifact-ids"].filter(
       (artifactId) => artifactId !== "studio-web-bundle"
     );
 
@@ -368,13 +368,13 @@ test("release train helper accepts a valid Contracts 0.1 manifest", () => {
   const result = validate(manifest);
 
   assert.equal(result.ok, true);
-  assert.equal(result.value.trainVersion, trainVersion);
+  assert.equal(result.value["train-version"], trainVersion);
   assert.equal(validateReleaseTrainManifestForSdk(manifest).ok, true);
   assert.equal(readReleaseTrainManifest(manifest, {
     sdkPackageVersion: trainVersion,
     contractsPackageVersion: trainVersion,
     contractsDependencyRange: trainVersion
-  }).trainId, trainId);
+  })["train-id"], trainId);
 });
 
 test("release train helper reports mismatched SDK package metadata and broad Contracts ranges", () => {
@@ -420,7 +420,7 @@ test("release train helper rejects removed Runtime and Studio registry surfaces"
 
 test("release train helper reports invalid current manifests with missing registry gates", () => {
   const manifest = validTrainManifest();
-  delete manifest.releaseGates.registryPackages;
+  delete manifest["release-gates"]["registry-packages"];
 
   const result = validate(manifest);
 
@@ -489,7 +489,7 @@ test("release train helper reports Studio web bundle version mismatches", () => 
 
 test("release train helper reports missing Studio desktop package artifacts", () => {
   const manifest = validTrainManifest();
-  delete manifest.components.studio.desktopPackages["aarch64-apple-darwin"];
+  delete manifest.components.studio["desktop-packages"]["aarch64-apple-darwin"];
 
   const result = validate(manifest);
 
@@ -503,7 +503,7 @@ test("release train helper reports missing Studio desktop package artifacts", ()
 
 test("release train helper reports Studio desktop package version mismatches", () => {
   const manifest = validTrainManifest();
-  manifest.components.studio.desktopPackages["x86_64-unknown-linux-gnu"].version = "0.42.0";
+  manifest.components.studio["desktop-packages"]["x86_64-unknown-linux-gnu"].version = "0.42.0";
 
   const result = validate(manifest);
 
@@ -512,7 +512,7 @@ test("release train helper reports Studio desktop package version mismatches", (
   assert.equal(
     result.diagnostics.find(
       (diagnostic) =>
-        diagnostic.field === "components.studio.desktopPackages.version" &&
+        diagnostic.field === "components.studio.desktop-packages.version" &&
         diagnostic.target === "x86_64-unknown-linux-gnu"
     )?.actual,
     "0.42.0"
@@ -521,7 +521,7 @@ test("release train helper reports Studio desktop package version mismatches", (
 
 test("release train helper reports missing Studio runtime sidecars", () => {
   const manifest = validTrainManifest();
-  delete manifest.components.studio.runtimeSidecars["x86_64-pc-windows-msvc"];
+  delete manifest.components.studio["runtime-sidecars"]["x86_64-pc-windows-msvc"];
 
   const result = validate(manifest);
 
@@ -535,7 +535,7 @@ test("release train helper reports missing Studio runtime sidecars", () => {
 
 test("release train helper reports Studio sidecar version mismatches", () => {
   const manifest = validTrainManifest();
-  manifest.components.studio.runtimeSidecars["aarch64-pc-windows-msvc"].version = "0.42.0";
+  manifest.components.studio["runtime-sidecars"]["aarch64-pc-windows-msvc"].version = "0.42.0";
 
   const result = validate(manifest);
 

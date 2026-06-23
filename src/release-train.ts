@@ -83,8 +83,8 @@ interface ReleaseTrainRuntimeComponentForSdk {
 
 interface ReleaseTrainStudioComponentForSdk {
   "web-bundle"?: ReleaseTrainVersionedArtifactForSdk;
-  desktopPackages?: ReleaseTrainTargetArtifactMapForSdk;
-  runtimeSidecars?: ReleaseTrainTargetArtifactMapForSdk;
+  "desktop-packages"?: ReleaseTrainTargetArtifactMapForSdk;
+  "runtime-sidecars"?: ReleaseTrainTargetArtifactMapForSdk;
 }
 
 interface ReleaseTrainComponentsForSdk {
@@ -198,7 +198,7 @@ function studioTargetArtifactDiagnostics(
   artifacts: ReleaseTrainTargetArtifactMapForSdk | undefined,
   targets: readonly ReleaseTrainTargetV01[],
   missingCode: Extract<ReleaseTrainDiagnosticCode, "missing_studio_desktop_package" | "missing_studio_sidecar">,
-  fieldBase: "components.studio.desktopPackages" | "components.studio.runtimeSidecars",
+  fieldBase: "components.studio.desktop-packages" | "components.studio.runtime-sidecars",
   missingMessage: (target: ReleaseTrainTargetV01) => string
 ): ReleaseTrainDiagnostic[] {
   return targets.flatMap((target) => {
@@ -231,7 +231,7 @@ function componentVersionDiagnostics(
   manifest: ReleaseTrainManifestV01,
   options: ValidateReleaseTrainManifestOptions
 ): ReleaseTrainDiagnostic[] {
-  const trainVersion = manifest.trainVersion;
+  const trainVersion = manifest["train-version"];
   const sdkPackageName = options.sdkPackageName ?? "@skenion/sdk";
   const components = releaseTrainComponentsForSdk(manifest);
 
@@ -277,18 +277,18 @@ function componentVersionDiagnostics(
     ...webBundleDiagnostics(trainVersion, components.studio?.["web-bundle"]),
     ...studioTargetArtifactDiagnostics(
       trainVersion,
-      components.studio?.desktopPackages,
+      components.studio?.["desktop-packages"],
       options.requiredStudioDesktopTargets ?? RELEASE_TRAIN_TARGETS,
       "missing_studio_desktop_package",
-      "components.studio.desktopPackages",
+      "components.studio.desktop-packages",
       (target) => `Studio desktop package artifact for ${target} is required for train ${trainVersion}`
     ),
     ...studioTargetArtifactDiagnostics(
       trainVersion,
-      components.studio?.runtimeSidecars,
+      components.studio?.["runtime-sidecars"],
       options.requiredStudioSidecarTargets ?? RELEASE_TRAIN_TARGETS,
       "missing_studio_sidecar",
-      "components.studio.runtimeSidecars",
+      "components.studio.runtime-sidecars",
       (target) => `Studio runtime sidecar for ${target} is required for train ${trainVersion}`
     ),
     ...versionDiagnostic(
@@ -312,7 +312,7 @@ function sdkToolingDiagnostics(
   manifest: ReleaseTrainManifestV01,
   options: ValidateReleaseTrainManifestOptions
 ): ReleaseTrainDiagnostic[] {
-  const trainVersion = manifest.trainVersion;
+  const trainVersion = manifest["train-version"];
   const diagnostics: ReleaseTrainDiagnostic[] = [];
 
   if (options.sdkPackageVersion !== undefined) {
@@ -365,8 +365,8 @@ function releaseTrainPreflightValue(document: unknown): ReleaseTrainManifestV01 
 
   if (
     candidate.schema !== "skenion.release-train" ||
-    candidate.schemaVersion !== "0.1.0" ||
-    typeof candidate.trainVersion !== "string" ||
+    candidate["schema-version"] !== "0.1.0" ||
+    typeof candidate["train-version"] !== "string" ||
     !isComponentRecord(components?.contracts) ||
     !isComponentRecord(components?.runtime) ||
     !isComponentRecord(components?.sdk) ||
