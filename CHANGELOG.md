@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.45.0](https://github.com/skenion/skenion-sdk/compare/skenion-sdk-v0.44.0...skenion-sdk-v0.45.0) (2026-06-23)
+
+
+### Features
+
+* **sdk:** adopt contracts-line compatibility matrix ([#48](https://github.com/skenion/skenion-sdk/issues/48)) ([a6af05a](https://github.com/skenion/skenion-sdk/commit/a6af05a003eb06653240b13fb7e02e5f06a96a7b))
+
+
+### Bug Fixes
+
+* **ci:** publish sdk with contracts line evidence ([#50](https://github.com/skenion/skenion-sdk/issues/50)) ([577cf53](https://github.com/skenion/skenion-sdk/commit/577cf53e052d3056f84abcc6eb0df61446d3c5b4))
+
 ## [0.44.0](https://github.com/skenion/skenion-sdk/compare/skenion-sdk-v0.43.0...skenion-sdk-v0.44.0) (2026-06-23)
 
 
