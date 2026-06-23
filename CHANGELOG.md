@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.44.0](https://github.com/skenion/skenion-sdk/compare/skenion-sdk-v0.43.0...skenion-sdk-v0.44.0) (2026-06-23)
+
+
+### Bug Fixes
+
+* **sdk:** consume kebab-case release train manifests ([#42](https://github.com/skenion/skenion-sdk/issues/42)) ([ae330c9](https://github.com/skenion/skenion-sdk/commit/ae330c9736c3be59ee509027b43abf6fe7bfff94))
+
 ## [0.43.0](https://github.com/skenion/skenion-sdk/compare/skenion-sdk-v0.7.0...skenion-sdk-v0.43.0) (2026-06-22)
 
 
