@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.45.1](https://github.com/skenion/skenion-sdk/compare/v0.45.0...v0.45.1) (2026-06-24)
+
+
+### Bug Fixes
+
+* **sdk:** use registry contracts dependency ([#56](https://github.com/skenion/skenion-sdk/issues/56)) ([7aaa6b2](https://github.com/skenion/skenion-sdk/commit/7aaa6b2e8cd67d14c33609f5dd008cac86343d23))
+
 ## [0.45.0](https://github.com/skenion/skenion-sdk/compare/skenion-sdk-v0.44.0...skenion-sdk-v0.45.0) (2026-06-23)
 
 

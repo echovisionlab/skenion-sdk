@@ -1,6 +1,6 @@
 {
   "name": "@skenion/sdk",
-  "version": "0.45.0",
+  "version": "0.45.1",
   "description": "TypeScript SDK for skenion node authoring and runtime clients",
   "type": "module",
   "license": "Apache-2.0",
