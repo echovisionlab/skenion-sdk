@@ -37,7 +37,7 @@
     "@skenion/contracts": ">=0.45.0 <0.46.0"
   },
   "devDependencies": {
-    "@skenion/contracts": "file:.deps/skenion-contracts/packages/ts",
+    "@skenion/contracts": ">=0.45.0 <0.46.0",
     "typescript": "^5.9.3"
   },
   "packageManager": "pnpm@10.12.4"

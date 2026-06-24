@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag to publish, for example skenion-sdk-v0.3.1
+        description: Release tag to publish, for example v0.45.0
         required: true
         type: string
 
@@ -28,7 +28,6 @@ jobs:
   npm:
     name: npm
     runs-on: ubuntu-latest
-    if: startsWith(github.event.release.tag_name || inputs.tag, 'skenion-sdk-v')
     steps:
       - id: release
         name: Resolve SDK release version
@@ -36,7 +35,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          prefix="skenion-sdk-v"
+          prefix="v"
           if [[ "${RELEASE_TAG}" != "${prefix}"* ]]; then
             echo "release tag ${RELEASE_TAG} must start with ${prefix}" >&2
             exit 1
@@ -75,7 +74,12 @@ jobs:
           const contractsRange = process.env.CONTRACTS_RANGE;
           const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
           const peer = pkg.peerDependencies?.["@skenion/contracts"];
+          const dev = pkg.devDependencies?.["@skenion/contracts"];
           const errors = [];
+
+          if (pkg.name !== "@skenion/sdk") {
+            errors.push(`package name ${pkg.name ?? "<missing>"} must be @skenion/sdk`);
+          }
 
           if (pkg.version !== sdkVersion) {
             errors.push(`package version ${pkg.version} must match SDK release tag ${sdkVersion}`);
@@ -84,6 +88,12 @@ jobs:
           if (peer !== contractsRange) {
             errors.push(
               `@skenion/contracts peer dependency ${peer ?? "<missing>"} must be ${contractsRange}`
+            );
+          }
+
+          if (dev !== contractsRange) {
+            errors.push(
+              `@skenion/contracts devDependency ${dev ?? "<missing>"} must be ${contractsRange}`
             );
           }
 

@@ -17,28 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Resolve contracts source ref
-        id: contracts
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-          if git ls-remote --exit-code --heads https://github.com/skenion/skenion-contracts.git "refs/heads/${branch}" >/dev/null; then
-            ref="${branch}"
-          elif [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            echo "::notice::No matching skenion-contracts branch for ${branch}; using main for PR CI."
-            ref="main"
-          else
-            ref="main"
-          fi
-          echo "ref=${ref}" >> "${GITHUB_OUTPUT}"
-          echo "Using skenion/skenion-contracts@${ref}"
-      - uses: actions/checkout@v6
-        with:
-          repository: skenion/skenion-contracts
-          ref: ${{ steps.contracts.outputs.ref }}
-          path: .deps/skenion-contracts
       - uses: pnpm/action-setup@v6
         with:
           version: 10.12.4
@@ -46,11 +24,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-        working-directory: .deps/skenion-contracts
-      - run: pnpm run build
-        working-directory: .deps/skenion-contracts
-      - name: Validate SDK Contracts peer range
+      - name: Validate SDK Contracts dependency range
         shell: bash
         run: |
           set -euo pipefail
@@ -60,9 +34,22 @@ jobs:
 
           const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
           const expected = ">=0.45.0 <0.46.0";
-          const actual = pkg.peerDependencies?.["@skenion/contracts"];
-          if (actual !== expected) {
-            console.error(`@skenion/contracts peer dependency must be ${expected}; received ${actual ?? "<missing>"}`);
+          const peer = pkg.peerDependencies?.["@skenion/contracts"];
+          const dev = pkg.devDependencies?.["@skenion/contracts"];
+          const errors = [];
+
+          if (peer !== expected) {
+            errors.push(`@skenion/contracts peer dependency must be ${expected}; received ${peer ?? "<missing>"}`);
+          }
+
+          if (dev !== expected) {
+            errors.push(`@skenion/contracts devDependency must be ${expected}; received ${dev ?? "<missing>"}`);
+          }
+
+          if (errors.length > 0) {
+            for (const error of errors) {
+              console.error(error);
+            }
             process.exit(1);
           }
           NODE

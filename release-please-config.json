@@ -2,7 +2,9 @@
   "release-type": "node",
   "packages": {
     ".": {
-      "package-name": "skenion-sdk"
+      "package-name": "skenion-sdk",
+      "include-component-in-tag": false,
+      "include-v-in-tag": true
     }
   }
 }
