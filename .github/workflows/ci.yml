@@ -34,7 +34,7 @@ jobs:
           const fs = require("node:fs");
 
           const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-          const expected = ">=0.45.0 <0.46.0";
+          const expected = ">=0.46.0 <0.47.0";
           const peer = pkg.peerDependencies?.["@skenion/contracts"];
           const dev = pkg.devDependencies?.["@skenion/contracts"];
           const errors = [];
