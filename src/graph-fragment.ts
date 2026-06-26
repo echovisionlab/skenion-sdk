@@ -27,6 +27,7 @@ import type {
 } from "@skenion/contracts";
 
 const CURRENT_SCHEMA_VERSION = "0.1.0";
+export const SKENION_GRAPH_FRAGMENT_CLIPBOARD_TYPE = "application/vnd.skenion.graph-fragment+json";
 
 export interface CreateGraphFragmentOptions {
   id?: string;
@@ -75,6 +76,11 @@ export interface PasteGraphFragmentResponseSummary {
   diagnostics: PasteGraphFragmentResponse["diagnostics"];
   mapNodeId(id: string): string;
   mapEdgeId(id: string): string;
+}
+
+export interface GraphFragmentClipboardEnvelope {
+  type: typeof SKENION_GRAPH_FRAGMENT_CLIPBOARD_TYPE;
+  fragment: GraphFragmentV01;
 }
 
 export class SkenionGraphFragmentError extends Error {
@@ -127,6 +133,10 @@ function sourceRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
     : {};
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function nodeIdSet(nodes: GraphNodeV01[]): Set<string> {
@@ -302,6 +312,35 @@ export function withGraphFragmentSourceMetadata(
     },
     {}
   );
+}
+
+export function serializeGraphFragmentClipboard(fragment: GraphFragmentV01): string {
+  const envelope: GraphFragmentClipboardEnvelope = {
+    type: SKENION_GRAPH_FRAGMENT_CLIPBOARD_TYPE,
+    fragment: validateFragmentOrThrow(fragment, { outsideEndpointPolicy: "omit" })
+  };
+  return JSON.stringify(envelope);
+}
+
+export function parseGraphFragmentClipboard(text: string): GraphFragmentV01 | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    return null;
+  }
+
+  const candidate =
+    isRecord(value) && value.type === SKENION_GRAPH_FRAGMENT_CLIPBOARD_TYPE
+      ? value.fragment
+      : value;
+
+  if (isRecord(value) && "type" in value && value.type !== SKENION_GRAPH_FRAGMENT_CLIPBOARD_TYPE) {
+    return null;
+  }
+
+  const validation = validateGraphFragmentV01(candidate, { outsideEndpointPolicy: "omit" });
+  return validation.ok ? validation.value : null;
 }
 
 export function createPasteGraphFragmentRequest(

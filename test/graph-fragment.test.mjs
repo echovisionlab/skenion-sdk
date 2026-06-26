@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  SKENION_GRAPH_FRAGMENT_CLIPBOARD_TYPE,
   SkenionGraphFragmentError,
   SkenionPasteRequestError,
   SkenionPasteResponseError,
@@ -9,7 +10,9 @@ import {
   createGraphFragmentFromSelection,
   createPasteGraphFragmentOperation,
   createPasteGraphFragmentRequest,
+  parseGraphFragmentClipboard,
   readPasteGraphFragmentResponse,
+  serializeGraphFragmentClipboard,
   validateGraphFragment,
   withGraphFragmentSourceMetadata
 } from "../dist/index.js";
@@ -226,6 +229,25 @@ test("source metadata helpers preserve patch-library and help source identity", 
   assert.equal(fragment.metadata?.source.path.kind, "help-working-copy");
   assert.deepEqual(updated.metadata?.help, { readonly: true });
   assert.equal(updated.metadata?.source.path.kind, "package-patch-definition");
+});
+
+test("graph fragment clipboard helpers round trip envelopes and raw fragments", () => {
+  const fragment = createGraphFragmentFromSelection(graph, {
+    selectedNodeIds: ["source", "middle"],
+    outsideEndpointPolicy: "omit"
+  });
+  const text = serializeGraphFragmentClipboard(fragment);
+  const envelope = JSON.parse(text);
+
+  assert.equal(envelope.type, SKENION_GRAPH_FRAGMENT_CLIPBOARD_TYPE);
+  assert.equal(parseGraphFragmentClipboard(text)?.edges[0]?.id, "edge.internal");
+  assert.equal(parseGraphFragmentClipboard(JSON.stringify(fragment))?.nodes[0]?.id, "source");
+  assert.equal(
+    parseGraphFragmentClipboard(JSON.stringify({ type: "application/vnd.example.other+json", fragment })),
+    null
+  );
+  assert.equal(parseGraphFragmentClipboard("null"), null);
+  assert.equal(parseGraphFragmentClipboard("{"), null);
 });
 
 test("paste request and session operation omit attribution by default", () => {

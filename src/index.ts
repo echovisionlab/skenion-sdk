@@ -43,6 +43,7 @@ export {
   readProjectDocument
 } from "./project-authoring.js";
 export {
+  SKENION_GRAPH_FRAGMENT_CLIPBOARD_TYPE,
   SkenionGraphFragmentError,
   SkenionPasteRequestError,
   SkenionPasteResponseError,
@@ -51,7 +52,9 @@ export {
   createGraphFragmentFromSelection,
   createPasteGraphFragmentOperation,
   createPasteGraphFragmentRequest,
+  parseGraphFragmentClipboard,
   readPasteGraphFragmentResponse,
+  serializeGraphFragmentClipboard,
   validateGraphFragment,
   withGraphFragmentSourceMetadata
 } from "./graph-fragment.js";
@@ -116,6 +119,7 @@ export type {
   CreateGraphFragmentOptions,
   CreatePasteGraphFragmentOperationOptions,
   CreatePasteGraphFragmentRequestOptions,
+  GraphFragmentClipboardEnvelope,
   GraphFragmentSelectionOptions,
   PasteGraphFragmentResponseSummary
 } from "./graph-fragment.js";

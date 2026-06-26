@@ -19,6 +19,8 @@ project, patch-library, graph-fragment, and package contracts:
   help working copies.
 - `createGraphFragment()` and `createGraphFragmentFromSelection()` create
   current `0.1` graph fragments for clipboard, help, palette, and paste flows.
+- `serializeGraphFragmentClipboard()` and `parseGraphFragmentClipboard()` wrap
+  and read the framework-agnostic graph-fragment clipboard JSON envelope.
 - `defineNodeDefinition()` creates current `0.1` node definition manifests.
 - `defineExtensionPackage()` creates current package manifests and rejects
   unsupported Runtime ABI versions.
