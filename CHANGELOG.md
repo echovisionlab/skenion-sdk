@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.46.0](https://github.com/skenion/skenion-sdk/compare/v0.45.2...v0.46.0) (2026-06-26)
+
+
+### Features
+
+* **sdk:** add local contracts integration mode ([fd882d8](https://github.com/skenion/skenion-sdk/commit/fd882d893c2dbc347c44b2d218eef8e26b683eaf))
+* **sdk:** expose graph fragment clipboard helpers ([de7377c](https://github.com/skenion/skenion-sdk/commit/de7377cedc9b32ce2636e08010e9973f06748dad))
+
 ## [0.45.2](https://github.com/skenion/skenion-sdk/compare/v0.45.1...v0.45.2) (2026-06-24)
 
 
