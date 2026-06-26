@@ -20,14 +20,14 @@ import {
 function node(id, portId, direction) {
   return {
     id,
-    kind: "core.value",
+    kind: "core.float",
     kindVersion: "0.1.0",
     params: {},
     ports: [
       {
         id: portId,
         direction,
-        type: "number.float"
+        type: "control.number.float"
       }
     ]
   };
@@ -43,12 +43,12 @@ const middleNode = {
     {
       id: "in",
       direction: "input",
-      type: "number.float"
+      type: "control.number.float"
     },
     {
       id: "out",
       direction: "output",
-      type: "number.float"
+      type: "control.number.float"
     }
   ]
 };
@@ -208,7 +208,7 @@ test("source metadata helpers preserve patch-library and help source identity", 
         kind: "help-working-copy",
         workingCopyId: "help-copy-1",
         sourcePackageId: "skenion/core",
-        sourcePatchId: "help.core.value"
+        sourcePatchId: "help.core.float"
       },
       immutable: true
     }

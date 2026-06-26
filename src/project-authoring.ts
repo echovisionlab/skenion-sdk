@@ -164,7 +164,7 @@ function validateNodePortsForAuthoring(node: GraphNodeV01): void {
       ports: node.ports,
       ...(node.portGroups === undefined ? {} : { portGroups: node.portGroups }),
       execution: {
-        model: "value"
+        model: "control"
       },
       state: {
         persistent: false
