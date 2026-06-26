@@ -404,6 +404,27 @@ test("invalid fragments, requests, and responses are rejected", () => {
       }),
     SkenionPasteResponseError
   );
+  assert.throws(
+    () =>
+      readPasteGraphFragmentResponse({
+        schema: "skenion.runtime.paste.response",
+        schemaVersion: "0.2.0",
+        ok: true,
+        applied: true,
+        conflict: false,
+        target,
+        revisionBefore: "rev-1",
+        revisionAfter: null,
+        historyEntryId: null,
+        idRemap: {
+          nodeIdMap: {},
+          edgeIdMap: {},
+          omittedEdgeIds: []
+        },
+        diagnostics: []
+      }),
+    SkenionPasteResponseError
+  );
 
   assert.throws(
     () =>
@@ -415,6 +436,20 @@ test("invalid fragments, requests, and responses are rejected", () => {
             baseRevision: ""
           },
           fragment
+        }
+      }),
+    SkenionPasteRequestError
+  );
+  assert.throws(
+    () =>
+      createPasteGraphFragmentOperation({
+        id: "op.invalid.attribution",
+        request: createPasteGraphFragmentRequest({
+          target,
+          fragment
+        }),
+        attribution: {
+          actorId: 7
         }
       }),
     SkenionPasteRequestError

@@ -199,7 +199,56 @@ test("collaboration operation builder accepts explicit payloads and idempotency 
   assert.equal("correlationId" in operation, false);
 });
 
-test("paste and undo collaboration builders validate through contracts", () => {
+test("collaboration readers reject malformed SDK-owned envelopes", () => {
+  const fragment = createGraphFragment({
+    nodes: [node],
+    outsideEndpointPolicy: "omit"
+  });
+
+  assert.throws(
+    () => readRuntimeCollaborationOperation(null),
+    SkenionRuntimeCollaborationError
+  );
+  assert.throws(
+    () =>
+      readRuntimeCollaborationOperationBatch({
+        schema: "skenion.runtime.collaboration.operation-batch",
+        schemaVersion: "0.1.0",
+        sessionId: "session-a",
+        operations: "not-an-array"
+      }),
+    SkenionRuntimeCollaborationError
+  );
+  assert.throws(
+    () =>
+      createRuntimeCollaborationOperation({
+        operationId: "op-invalid-paste",
+        sessionId: "session-a",
+        participantId: "participant-a",
+        causal: {
+          baseRevision: "rev-1",
+          baseSequence: "four",
+          vector: {
+            "participant-a": "four"
+          }
+        },
+        payload: {
+          kind: "pasteGraphFragment",
+          request: {
+            target: {
+              path: { kind: "root" },
+              baseRevision: ""
+            },
+            fragment
+          }
+        },
+        submittedAt: "2026-06-22T00:00:00.200Z"
+      }),
+    SkenionRuntimeCollaborationError
+  );
+});
+
+test("paste and undo collaboration builders validate SDK envelopes and shared paste payloads", () => {
   const fragment = createGraphFragment({
     nodes: [node],
     outsideEndpointPolicy: "omit"
@@ -297,6 +346,16 @@ test("collaboration batch builder validates session and idempotency consistency"
       createRuntimeCollaborationOperationBatch({
         sessionId: "session-a",
         operations: [first, { ...second, idempotencyKey: first.idempotencyKey }]
+      }),
+    SkenionRuntimeCollaborationError
+  );
+  assert.throws(
+    () =>
+      readRuntimeCollaborationOperationBatch({
+        schema: "skenion.runtime.collaboration.operation-batch",
+        schemaVersion: "0.1.0",
+        sessionId: "session-a",
+        operations: [{ ...first, sessionId: "other-session" }]
       }),
     SkenionRuntimeCollaborationError
   );
@@ -431,6 +490,10 @@ test("collaboration result and event readers parse valid envelopes and reject in
   assert.equal(readRuntimeCollaborationEvent(event), event);
   assert.equal(parseRuntimeCollaborationEvent({ data: JSON.stringify(event) }).eventId, "event-6");
   assert.throws(
+    () => readRuntimeCollaborationOperationResult({ ...result, status: "rejected" }),
+    SkenionRuntimeCollaborationError
+  );
+  assert.throws(
     () => readRuntimeCollaborationOperationResult({ ...result, status: "accepted", nack: { reason: "invalid-operation" } }),
     SkenionRuntimeCollaborationError
   );
@@ -442,9 +505,90 @@ test("collaboration result and event readers parse valid envelopes and reject in
     () => parseRuntimeCollaborationEvent("{"),
     SkenionRuntimeCollaborationError
   );
+  assert.throws(
+    () =>
+      readRuntimeCollaborationEvent({
+        ...event,
+        payload: {
+          kind: "operationResult",
+          result: {
+            ...result,
+            sessionId: "other-session"
+          }
+        }
+      }),
+    SkenionRuntimeCollaborationError
+  );
 });
 
-test("rebase strategies are derived from contracts and usable in validation", () => {
+test("collaboration event reader accepts presence and selection payloads", () => {
+  const presence = createRuntimeCollaborationPresenceEnvelope({
+    sessionId: "session-a",
+    participantId: "participant-a",
+    presence: {
+      state: "active"
+    },
+    updatedAt: "2026-06-22T00:00:08.000Z",
+    expiresAt: "2026-06-22T00:00:38.000Z"
+  });
+  const selection = createRuntimeCollaborationSelectionEnvelope({
+    sessionId: "session-a",
+    participantId: "participant-a",
+    target,
+    selection: {
+      ranges: [
+        {
+          kind: "nodes",
+          nodeIds: ["node-1"]
+        }
+      ]
+    },
+    updatedAt: "2026-06-22T00:00:08.000Z",
+    expiresAt: "2026-06-22T00:00:38.000Z"
+  });
+  const baseEvent = {
+    schema: "skenion.runtime.collaboration.event",
+    schemaVersion: "0.1.0",
+    eventId: "event-presence",
+    sessionId: "session-a",
+    sequence: 7,
+    causal,
+    replay: {
+      cursor: "7",
+      previousCursor: "6",
+      replayed: false,
+      gap: null,
+      overflow: false
+    },
+    createdAt: "2026-06-22T00:00:08.000Z"
+  };
+
+  assert.equal(
+    readRuntimeCollaborationEvent({
+      ...baseEvent,
+      kind: "presence",
+      payload: {
+        kind: "presence",
+        presence
+      }
+    }).payload.kind,
+    "presence"
+  );
+  assert.equal(
+    readRuntimeCollaborationEvent({
+      ...baseEvent,
+      eventId: "event-selection",
+      kind: "selection",
+      payload: {
+        kind: "selection",
+        selection
+      }
+    }).payload.kind,
+    "selection"
+  );
+});
+
+test("rebase strategies are SDK-owned and usable in validation", () => {
   const operation = createRuntimeCollaborationUndoRedoOperation({
     operationId: "op-rebase-1",
     sessionId: "session-a",
