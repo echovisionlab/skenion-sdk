@@ -25,9 +25,9 @@ import {
 const valueOutPort = definePort({
   id: "out",
   direction: "output",
-  type: "number.float",
+  type: "value.core.float32",
   rate: "control",
-  accepts: ["number.float"],
+  accepts: ["value.core.float32"],
   fanOutPolicy: "allow",
   description: "Outputs the current value"
 });
@@ -35,7 +35,7 @@ const valueOutPort = definePort({
 const valueInPort = definePort({
   id: "in",
   direction: "input",
-  type: "number.float",
+  type: "value.core.float32",
   rate: "control",
   defaultValue: 0,
   required: true,
@@ -48,7 +48,7 @@ const valueInPort = definePort({
 
 const inletNode = defineGraphNode({
   id: "patch.inlet",
-  kind: "core.inlet",
+  kind: "object.core.inlet",
   params: {
     portId: "value",
     label: "Value"
@@ -58,7 +58,7 @@ const inletNode = defineGraphNode({
 
 const outletNode = defineGraphNode({
   id: "patch.outlet",
-  kind: "core.outlet",
+  kind: "object.core.outlet",
   kindVersion: "0.1.0",
   params: {
     portId: "scaled",
@@ -69,7 +69,7 @@ const outletNode = defineGraphNode({
     {
       id: "aux",
       direction: "input",
-      type: "number.float",
+      type: "value.core.float32",
       minPorts: 0,
       maxPorts: 4,
       ordered: true,
@@ -84,13 +84,13 @@ const patchEdge = {
   id: "edge.patch.value",
   source: { nodeId: "patch.inlet", portId: "out" },
   target: { nodeId: "patch.outlet", portId: "in" },
-  resolvedType: "number.float",
+  resolvedType: "value.core.float32",
   enabled: true
 };
 
-const rootValueNode = defineGraphNode({
-  id: "root.value",
-  kind: "core.value",
+const rootFloatNode = defineGraphNode({
+  id: "root.float",
+  kind: "object.core.float",
   kindVersion: "0.1.0",
   params: {
     value: 0.5
@@ -112,7 +112,7 @@ test("current 0.1 helpers build graph, patch library, project, and patch contrac
   const rootGraph = defineGraphDocument({
     id: "graph.root",
     revision: "rev-root-1",
-    nodes: [rootValueNode],
+    nodes: [rootFloatNode],
     edges: [],
     cableStyles: {
       numeric: {
@@ -183,12 +183,12 @@ test("current 0.1 node-definition helper validates ports and strict versions", (
     kind: "core.empty"
   });
   const minimal = defineNodeDefinition({
-    id: "core.value",
+    id: "object.core.float",
     version: "0.1.0",
-    displayName: "Value",
+    displayName: "Float",
     category: "Core",
     execution: {
-      model: "value"
+      model: "control"
     }
   });
   const stateDefault = defineNodeDefinition({
@@ -206,7 +206,7 @@ test("current 0.1 node-definition helper validates ports and strict versions", (
       {
         id: "inputs",
         direction: "input",
-        type: "number.float",
+        type: "value.core.float32",
         minPorts: 1,
         maxPorts: 8
       }
@@ -231,7 +231,7 @@ test("current 0.1 node-definition helper validates ports and strict versions", (
   assert.equal(minimal.schemaVersion, "0.1.0");
   assert.equal(minimal.state.persistent, false);
   assert.equal(stateDefault.state.persistent, false);
-  assert.equal(full.ports[0].type, "number.float");
+  assert.equal(full.ports[0].type, "value.core.float32");
   assert.equal(full.portGroups?.[0].maxPorts, 8);
   assert.equal(full.surface?.palette, "direct");
 
@@ -323,7 +323,7 @@ test("Runtime graph target helpers create current PatchPath targets and reject o
       {
         op: "node.add",
         changeId: "change-node-1",
-        node: rootValueNode
+        node: rootFloatNode
       }
     ],
     submittedAt: "2026-06-22T00:00:01.000Z"
@@ -379,7 +379,7 @@ test("current readers reject unsupported graph and project schema versions", () 
   const graph = defineGraphDocument({
     id: "graph.valid",
     revision: "rev-valid",
-    nodes: [rootValueNode],
+    nodes: [rootFloatNode],
     edges: []
   });
   const project = defineProjectDocument({
@@ -402,7 +402,7 @@ test("current helpers reject invalid graph, patch, project, and patch-library in
   const validGraph = defineGraphDocument({
     id: "graph.valid",
     revision: "rev-valid",
-    nodes: [rootValueNode],
+    nodes: [rootFloatNode],
     edges: []
   });
   const validProject = defineProjectDocument({
@@ -417,14 +417,14 @@ test("current helpers reject invalid graph, patch, project, and patch-library in
   });
 
   assert.deepEqual(definePatchLibrary(), []);
-  assert.equal(validProject.viewState.canvas.nodes["root.value"].x, 96);
+  assert.equal(validProject.viewState.canvas.nodes["root.float"].x, 96);
 
   assert.throws(
     () =>
       definePort({
         id: "",
         direction: "input",
-        type: "number.float"
+        type: "value.core.float32"
       }),
     SkenionProjectAuthoringError
   );
@@ -447,7 +447,7 @@ test("current helpers reject invalid graph, patch, project, and patch-library in
       defineGraphDocument({
         id: "graph.invalid",
         revision: "rev-invalid",
-        nodes: [rootValueNode],
+        nodes: [rootFloatNode],
         edges: [
           {
             id: "edge.invalid",

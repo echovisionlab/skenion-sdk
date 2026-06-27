@@ -1,9 +1,7 @@
 import {
   analyzeGraphFragmentV01,
   validateGraphFragmentV01,
-  validatePasteGraphFragmentRequest,
-  validatePasteGraphFragmentResponse,
-  validateRuntimeOperationEnvelope
+  validatePasteGraphFragmentRequest
 } from "@skenion/contracts";
 import type {
   EdgeSpecV01,
@@ -16,13 +14,9 @@ import type {
   GraphFragmentViewV01,
   GraphNodeV01,
   GraphTargetRef,
-  IdRemapResult,
   PasteGraphFragmentOptions,
   PasteGraphFragmentRequest,
-  PasteGraphFragmentResponse,
   PastePlacement,
-  RuntimeOperationAttribution,
-  RuntimeOperationEnvelope,
   ViewStateV01
 } from "@skenion/contracts";
 
@@ -62,6 +56,60 @@ export interface CreatePasteGraphFragmentOperationOptions {
   attribution?: RuntimeOperationAttribution;
   correlationId?: string;
   createdAt?: string;
+}
+
+export interface RuntimeOperationAttribution {
+  actorId?: string;
+  clientId?: string;
+  label?: string;
+}
+
+export interface RuntimeOperationEnvelope {
+  schema: "skenion.runtime.operation";
+  schemaVersion: "0.1.0";
+  id: string;
+  kind: "pasteGraphFragment";
+  request: PasteGraphFragmentRequest;
+  attribution?: RuntimeOperationAttribution;
+  correlationId?: string;
+  createdAt?: string;
+}
+
+export interface IdRemapResult {
+  nodeIdMap: Record<string, string>;
+  edgeIdMap: Record<string, string>;
+  omittedEdgeIds: string[];
+}
+
+export type RuntimeOperationDiagnosticSeverity = "error" | "warning" | "info";
+
+export interface RuntimeOperationDiagnostic {
+  severity: RuntimeOperationDiagnosticSeverity;
+  code: string;
+  message: string;
+  path?: string;
+  target?: GraphTargetRef;
+  expectedRevision?: string;
+  actualRevision?: string;
+  duplicates?: string[];
+  nodes?: string[];
+  edges?: string[];
+  interfacePolicy?: string;
+  interfaceDetail?: unknown;
+}
+
+export interface PasteGraphFragmentResponse {
+  schema: "skenion.runtime.paste-graph-fragment.response";
+  schemaVersion: "0.1.0";
+  ok: boolean;
+  applied: boolean;
+  conflict: boolean;
+  target: GraphTargetRef;
+  revisionBefore: string;
+  revisionAfter: string | null;
+  historyEntryId: string | null;
+  idRemap: IdRemapResult;
+  diagnostics: RuntimeOperationDiagnostic[];
 }
 
 export interface PasteGraphFragmentResponseSummary {
@@ -137,6 +185,121 @@ function sourceRecord(value: unknown): Record<string, unknown> {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function minimalGraphFragment(): GraphFragmentV01 {
+  return {
+    schema: "skenion.graph.fragment",
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    nodes: [],
+    edges: []
+  };
+}
+
+function requireRecord(value: unknown, path: string, errors: string[]): Record<string, unknown> {
+  if (!isRecord(value)) {
+    errors.push(`${path} must be object`);
+  }
+  return isRecord(value) ? value : {};
+}
+
+function requireBoolean(value: unknown, path: string, errors: string[]): void {
+  if (typeof value !== "boolean") {
+    errors.push(`${path} must be boolean`);
+  }
+}
+
+function requireNonEmptyString(value: unknown, path: string, errors: string[]): void {
+  if (typeof value !== "string" || value.length === 0) {
+    errors.push(`${path} must be a non-empty string`);
+  }
+}
+
+function requireNullableString(value: unknown, path: string, errors: string[]): void {
+  if (value !== null && typeof value !== "string") {
+    errors.push(`${path} must be string or null`);
+  }
+}
+
+function requireStringMap(value: unknown, path: string, errors: string[]): void {
+  if (!isRecord(value) || Object.values(value).some((entry) => typeof entry !== "string")) {
+    errors.push(`${path} must be a string map`);
+  }
+}
+
+function requireStringArray(value: unknown, path: string, errors: string[]): void {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
+    errors.push(`${path} must be an array of strings`);
+  }
+}
+
+function validateGraphTarget(target: unknown, errors: string[]): void {
+  const validation = validatePasteGraphFragmentRequest({
+    target,
+    fragment: minimalGraphFragment()
+  });
+  if (!validation.ok) {
+    errors.push(...validation.errors);
+  }
+}
+
+function validateRuntimeOperationAttribution(attribution: unknown, errors: string[]): void {
+  const value = requireRecord(attribution, "/attribution", errors);
+  for (const field of ["actorId", "clientId", "label"] as const) {
+    if (value[field] !== undefined && typeof value[field] !== "string") {
+      errors.push(`/attribution/${field} must be string when present`);
+    }
+  }
+}
+
+function pasteGraphFragmentOperationErrors(operation: unknown): string[] {
+  const errors: string[] = [];
+  const value = requireRecord(operation, "/", errors);
+
+  requireNonEmptyString(value.id, "/id", errors);
+  const requestValidation = validatePasteGraphFragmentRequest(value.request);
+  if (!requestValidation.ok) {
+    errors.push(...requestValidation.errors);
+  }
+  if (value.attribution !== undefined) {
+    validateRuntimeOperationAttribution(value.attribution, errors);
+  }
+  if (value.correlationId !== undefined) {
+    requireNonEmptyString(value.correlationId, "/correlationId", errors);
+  }
+  if (value.createdAt !== undefined) {
+    requireNonEmptyString(value.createdAt, "/createdAt", errors);
+  }
+
+  return errors;
+}
+
+function pasteGraphFragmentResponseErrors(response: unknown): string[] {
+  const errors: string[] = [];
+  const value = requireRecord(response, "/", errors);
+  const idRemap = requireRecord(value.idRemap, "/idRemap", errors);
+
+  if (value.schema !== "skenion.runtime.paste-graph-fragment.response") {
+    errors.push("/schema must be skenion.runtime.paste-graph-fragment.response");
+  }
+  if (value.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+    errors.push(`/schemaVersion must be ${CURRENT_SCHEMA_VERSION}`);
+  }
+  requireBoolean(value.ok, "/ok", errors);
+  requireBoolean(value.applied, "/applied", errors);
+  requireBoolean(value.conflict, "/conflict", errors);
+  validateGraphTarget(value.target, errors);
+  requireNonEmptyString(value.revisionBefore, "/revisionBefore", errors);
+  requireNullableString(value.revisionAfter, "/revisionAfter", errors);
+  requireNullableString(value.historyEntryId, "/historyEntryId", errors);
+  requireStringMap(idRemap.nodeIdMap, "/idRemap/nodeIdMap", errors);
+  requireStringMap(idRemap.edgeIdMap, "/idRemap/edgeIdMap", errors);
+  requireStringArray(idRemap.omittedEdgeIds, "/idRemap/omittedEdgeIds", errors);
+  if (!Array.isArray(value.diagnostics)) {
+    errors.push("/diagnostics must be array");
+  }
+
+  return errors;
 }
 
 function nodeIdSet(nodes: GraphNodeV01[]): Set<string> {
@@ -375,23 +538,23 @@ export function createPasteGraphFragmentOperation(
     ...(options.createdAt === undefined ? {} : { createdAt: options.createdAt })
   };
 
-  const validation = validateRuntimeOperationEnvelope(operation);
-  if (!validation.ok) {
-    throw new SkenionPasteRequestError(validation.errors);
+  const errors = pasteGraphFragmentOperationErrors(operation);
+  if (errors.length > 0) {
+    throw new SkenionPasteRequestError(errors);
   }
 
-  return validation.value;
+  return operation;
 }
 
 export function readPasteGraphFragmentResponse(
   response: unknown
 ): PasteGraphFragmentResponseSummary {
-  const validation = validatePasteGraphFragmentResponse(response);
-  if (!validation.ok) {
-    throw new SkenionPasteResponseError(validation.errors);
+  const errors = pasteGraphFragmentResponseErrors(response);
+  if (errors.length > 0) {
+    throw new SkenionPasteResponseError(errors);
   }
 
-  const value = validation.value;
+  const value = response as PasteGraphFragmentResponse;
   return {
     ok: value.ok,
     applied: value.applied,

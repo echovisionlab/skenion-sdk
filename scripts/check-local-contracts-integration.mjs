@@ -10,9 +10,9 @@ const packageName = "@skenion/contracts";
 const localPathEnvName = "SKENION_LOCAL_CONTRACTS_PATH";
 
 const defaultContractsPaths = [
-  "../skenion-contracts/packages/ts",
+  ".deps/skenion-contracts/packages/ts",
   "../Skenion-contracts/packages/ts",
-  ".deps/skenion-contracts/packages/ts"
+  "../skenion-contracts/packages/ts"
 ];
 
 function usage() {

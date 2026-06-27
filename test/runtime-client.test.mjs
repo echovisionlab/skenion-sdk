@@ -301,7 +301,7 @@ test("runtime event replay cursor helpers build reconnect headers and queries", 
   );
 });
 
-test("runtime session info and event readers validate contract shapes", () => {
+test("runtime session info and event readers validate SDK-owned transport shapes", () => {
   assert.equal(readRuntimeSessionInfo(sessionInfo).sessionId, "session-a");
   assert.equal(readRuntimeSessionEvent(sessionEvent).replay.cursor, "8");
   assert.equal(parseRuntimeSessionEvent(JSON.stringify(sessionEvent)).id, "event-8");
@@ -309,6 +309,16 @@ test("runtime session info and event readers validate contract shapes", () => {
 
   assert.throws(
     () => readRuntimeSessionInfo({ ...sessionInfo, sessionId: "" }),
+    SkenionRuntimeSessionInfoError
+  );
+  assert.throws(
+    () => readRuntimeSessionInfo({
+      ...sessionInfo,
+      eventReplay: {
+        ...sessionInfo.eventReplay,
+        replayLimit: "many"
+      }
+    }),
     SkenionRuntimeSessionInfoError
   );
   assert.throws(
@@ -328,7 +338,7 @@ test("runtime session info and event readers validate contract shapes", () => {
   );
 });
 
-test("runtime health and info helpers reuse contract runtime HTTP guards", () => {
+test("runtime health and info helpers use SDK-owned runtime HTTP guards", () => {
   assert.equal(readRuntimeHealth(runtimeHealth).service, "skenion-runtime");
   assert.equal(readRuntimeInfo(runtimeInfo).version, "0.39.0");
 

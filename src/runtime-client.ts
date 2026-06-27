@@ -1,23 +1,158 @@
-import {
-  isRuntimeHealth,
-  isRuntimeInfo,
-  validateRuntimeSessionEvent,
-  validateRuntimeSessionInfoResponse
-} from "@skenion/contracts";
-import type {
-  RuntimeConnectionProfile,
-  RuntimeConnectionProfileMode,
-  RuntimeDiagnosticV01,
-  RuntimeEndpointMetadata,
-  RuntimeEventReplayGap,
-  RuntimeHealth,
-  RuntimeInfo,
-  RuntimeOwnershipMode,
-  RuntimeProcessMetadata,
-  RuntimeSessionCapabilitySet,
-  RuntimeSessionEvent,
-  RuntimeSessionInfoResponse
-} from "@skenion/contracts";
+export type RuntimeDiagnosticSeverityV01 = "error" | "warning" | "info";
+
+export type RuntimeDiagnosticDetails =
+  | string
+  | number
+  | boolean
+  | null
+  | RuntimeDiagnosticDetails[]
+  | { [key: string]: RuntimeDiagnosticDetails };
+
+export interface RuntimeDiagnosticV01 {
+  severity: RuntimeDiagnosticSeverityV01;
+  message: string;
+  code?: string;
+  details?: RuntimeDiagnosticDetails;
+}
+
+export interface RuntimeHealth {
+  ok: boolean;
+  service: string;
+  version: string;
+  apiVersion?: string;
+}
+
+export interface RuntimeInfo {
+  name: string;
+  version: string;
+  apiVersion: string;
+  capabilities: string[];
+}
+
+export type RuntimeSessionLifecycleState = "initializing" | "ready" | "closing" | "closed" | "error";
+export type RuntimeConnectionProfileMode = "local-managed" | "local-shared" | "remote";
+export type RuntimeOwnershipMode = "owned-child" | "external" | "remote";
+
+export interface RuntimeEndpointMetadata {
+  url: string;
+  canonicalUrl?: string;
+  protocol: "http" | "https";
+  host?: string;
+  port?: number;
+  tls?: boolean;
+}
+
+export interface RuntimeProcessMetadata {
+  ownedByHost: boolean;
+  pid?: number;
+  executablePath?: string;
+  workingDirectory?: string;
+  startedAt?: string;
+  ownerWindowId?: string;
+  platform?: string;
+  arch?: string;
+}
+
+interface RuntimeConnectionProfileBase {
+  displayName?: string;
+  endpoint: RuntimeEndpointMetadata;
+  process?: RuntimeProcessMetadata | null;
+}
+
+export type RuntimeConnectionProfile =
+  | (RuntimeConnectionProfileBase & {
+      mode: "local-managed";
+      ownership: "owned-child";
+    })
+  | (RuntimeConnectionProfileBase & {
+      mode: "local-shared";
+      ownership: "external";
+    })
+  | (RuntimeConnectionProfileBase & {
+      mode: "remote";
+      ownership: "remote";
+    });
+
+export interface RuntimeEventReplayWindow {
+  cursorKind: "sequence";
+  currentCursor: string;
+  earliestSequence: number;
+  latestSequence: number;
+  replayLimit: number | null;
+  overflow?: boolean;
+}
+
+export interface RuntimeSessionCapabilitySet {
+  sessionAddressing: boolean;
+  eventReplay: boolean;
+  multiWindow: boolean;
+  profiles: RuntimeConnectionProfileMode[];
+  authPolicy: "deferred";
+}
+
+export interface RuntimeSessionSnapshot {
+  sessionRevision: number;
+  viewRevision: number;
+  controlRevision: number;
+  project: unknown;
+  diagnostics: RuntimeDiagnosticV01[];
+  plan: Record<string, unknown> | null;
+}
+
+export interface RuntimeSessionInfoResponse {
+  schema: "skenion.runtime.session.info";
+  schemaVersion: "0.1.0";
+  ok: boolean;
+  sessionId: string;
+  lifecycle: RuntimeSessionLifecycleState;
+  snapshot: RuntimeSessionSnapshot;
+  profile: RuntimeConnectionProfile;
+  capabilities: RuntimeSessionCapabilitySet;
+  eventReplay: RuntimeEventReplayWindow;
+  diagnostics: RuntimeDiagnosticV01[];
+}
+
+export interface RuntimeHistory {
+  schema: "skenion.runtime.history";
+  schemaVersion: "0.1.0";
+  entries: Record<string, unknown>[];
+  canUndo: boolean;
+  canRedo: boolean;
+  undoDepth: number;
+  redoDepth: number;
+}
+
+export type RuntimeSessionEventKind = "snapshot" | "load" | "clear" | "mutate" | "undo" | "redo";
+
+export interface RuntimeEventReplayGap {
+  expectedSequence: number;
+  actualSequence: number;
+  reason: "retention-overflow" | "stream-reset" | "unknown";
+}
+
+export interface RuntimeEventReplayMetadata {
+  cursor: string;
+  previousCursor: string | null;
+  replayed: boolean;
+  gap: RuntimeEventReplayGap | null;
+  overflow: boolean;
+}
+
+export interface RuntimeSessionEvent {
+  schema: "skenion.runtime.session.event";
+  schemaVersion: "0.1.0";
+  id: string;
+  sessionId: string;
+  sequence: number;
+  sessionRevision: number;
+  kind: RuntimeSessionEventKind;
+  snapshot: RuntimeSessionSnapshot;
+  history: RuntimeHistory;
+  mutation?: Record<string, unknown>;
+  replay: RuntimeEventReplayMetadata;
+  diagnostics: RuntimeDiagnosticV01[];
+  createdAt: string;
+}
 
 export type RuntimeSessionRoute =
   | ""
@@ -188,6 +323,155 @@ export class SkenionRuntimeSessionEventError extends Error {
     this.name = "SkenionRuntimeSessionEventError";
     this.errors = errors;
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function recordValue(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {};
+}
+
+function requireRecord(value: unknown, path: string, errors: string[]): Record<string, unknown> {
+  if (!isRecord(value)) {
+    errors.push(`${path} must be object`);
+  }
+  return recordValue(value);
+}
+
+function requireString(value: unknown, path: string, errors: string[]): void {
+  if (typeof value !== "string") {
+    errors.push(`${path} must be string`);
+  }
+}
+
+function requireNonEmptyString(value: unknown, path: string, errors: string[]): void {
+  if (typeof value !== "string" || value.length === 0) {
+    errors.push(`${path} must be a non-empty string`);
+  }
+}
+
+function requireNumber(value: unknown, path: string, errors: string[]): void {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    errors.push(`${path} must be number`);
+  }
+}
+
+function requireBoolean(value: unknown, path: string, errors: string[]): void {
+  if (typeof value !== "boolean") {
+    errors.push(`${path} must be boolean`);
+  }
+}
+
+function requireStringArray(value: unknown, path: string, errors: string[]): void {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
+    errors.push(`${path} must be an array of strings`);
+  }
+}
+
+function requireLiteral(value: unknown, expected: string, path: string, errors: string[]): void {
+  if (value !== expected) {
+    errors.push(`${path} must be ${expected}`);
+  }
+}
+
+function requireOneOf(value: unknown, allowed: readonly string[], path: string, errors: string[]): void {
+  if (typeof value !== "string" || !allowed.includes(value)) {
+    errors.push(`${path} must be one of ${allowed.join(", ")}`);
+  }
+}
+
+function runtimeSessionInfoErrors(info: unknown): string[] {
+  const errors: string[] = [];
+  const value = requireRecord(info, "/", errors);
+  const snapshot = requireRecord(value.snapshot, "/snapshot", errors);
+  const profile = requireRecord(value.profile, "/profile", errors);
+  const endpoint = requireRecord(profile.endpoint, "/profile/endpoint", errors);
+  const capabilities = requireRecord(value.capabilities, "/capabilities", errors);
+  const replay = requireRecord(value.eventReplay, "/eventReplay", errors);
+
+  requireLiteral(value.schema, "skenion.runtime.session.info", "/schema", errors);
+  requireLiteral(value.schemaVersion, "0.1.0", "/schemaVersion", errors);
+  requireBoolean(value.ok, "/ok", errors);
+  requireNonEmptyString(value.sessionId, "/sessionId", errors);
+  requireOneOf(value.lifecycle, ["initializing", "ready", "closing", "closed", "error"], "/lifecycle", errors);
+  requireNumber(snapshot.sessionRevision, "/snapshot/sessionRevision", errors);
+  requireNumber(snapshot.viewRevision, "/snapshot/viewRevision", errors);
+  requireNumber(snapshot.controlRevision, "/snapshot/controlRevision", errors);
+  requireString(endpoint.url, "/profile/endpoint/url", errors);
+  requireOneOf(profile.mode, ["local-managed", "local-shared", "remote"], "/profile/mode", errors);
+  requireOneOf(profile.ownership, ["owned-child", "external", "remote"], "/profile/ownership", errors);
+  requireBoolean(capabilities.sessionAddressing, "/capabilities/sessionAddressing", errors);
+  requireBoolean(capabilities.eventReplay, "/capabilities/eventReplay", errors);
+  requireBoolean(capabilities.multiWindow, "/capabilities/multiWindow", errors);
+  requireStringArray(capabilities.profiles, "/capabilities/profiles", errors);
+  requireLiteral(capabilities.authPolicy, "deferred", "/capabilities/authPolicy", errors);
+  requireLiteral(replay.cursorKind, "sequence", "/eventReplay/cursorKind", errors);
+  requireNonEmptyString(replay.currentCursor, "/eventReplay/currentCursor", errors);
+  requireNumber(replay.earliestSequence, "/eventReplay/earliestSequence", errors);
+  requireNumber(replay.latestSequence, "/eventReplay/latestSequence", errors);
+
+  if (
+    replay.replayLimit !== null &&
+    (typeof replay.replayLimit !== "number" || !Number.isFinite(replay.replayLimit))
+  ) {
+    errors.push("/eventReplay/replayLimit must be number or null");
+  }
+
+  return errors;
+}
+
+function runtimeSessionEventErrors(event: unknown): string[] {
+  const errors: string[] = [];
+  const value = requireRecord(event, "/", errors);
+  const snapshot = requireRecord(value.snapshot, "/snapshot", errors);
+  const history = requireRecord(value.history, "/history", errors);
+  const replay = requireRecord(value.replay, "/replay", errors);
+
+  requireLiteral(value.schema, "skenion.runtime.session.event", "/schema", errors);
+  requireLiteral(value.schemaVersion, "0.1.0", "/schemaVersion", errors);
+  requireNonEmptyString(value.id, "/id", errors);
+  requireNonEmptyString(value.sessionId, "/sessionId", errors);
+  requireNumber(value.sequence, "/sequence", errors);
+  requireNumber(value.sessionRevision, "/sessionRevision", errors);
+  requireOneOf(value.kind, ["snapshot", "load", "clear", "mutate", "undo", "redo"], "/kind", errors);
+  requireNumber(snapshot.sessionRevision, "/snapshot/sessionRevision", errors);
+  requireLiteral(history.schema, "skenion.runtime.history", "/history/schema", errors);
+  requireLiteral(history.schemaVersion, "0.1.0", "/history/schemaVersion", errors);
+  requireNonEmptyString(replay.cursor, "/replay/cursor", errors);
+  requireBoolean(replay.replayed, "/replay/replayed", errors);
+  requireBoolean(replay.overflow, "/replay/overflow", errors);
+  requireString(value.createdAt, "/createdAt", errors);
+
+  if (
+    typeof value.sessionRevision === "number" &&
+    typeof snapshot.sessionRevision === "number" &&
+    value.sessionRevision !== snapshot.sessionRevision
+  ) {
+    errors.push("/snapshot/sessionRevision must match /sessionRevision");
+  }
+
+  return errors;
+}
+
+function runtimeHealthErrors(value: unknown): string[] {
+  const errors: string[] = [];
+  const health = requireRecord(value, "/", errors);
+  requireBoolean(health.ok, "/ok", errors);
+  requireNonEmptyString(health.service, "/service", errors);
+  requireNonEmptyString(health.version, "/version", errors);
+  return errors;
+}
+
+function runtimeInfoErrors(value: unknown): string[] {
+  const errors: string[] = [];
+  const info = requireRecord(value, "/", errors);
+  requireNonEmptyString(info.name, "/name", errors);
+  requireNonEmptyString(info.version, "/version", errors);
+  requireNonEmptyString(info.apiVersion, "/apiVersion", errors);
+  requireStringArray(info.capabilities, "/capabilities", errors);
+  return errors;
 }
 
 function normalizedBaseUrl(baseUrl: string | URL): URL {
@@ -380,21 +664,21 @@ export function runtimeEventReplaySearch(
 }
 
 export function readRuntimeSessionInfo(info: unknown): RuntimeSessionInfoResponse {
-  const validation = validateRuntimeSessionInfoResponse(info);
-  if (!validation.ok) {
-    throw new SkenionRuntimeSessionInfoError(validation.errors);
+  const errors = runtimeSessionInfoErrors(info);
+  if (errors.length > 0) {
+    throw new SkenionRuntimeSessionInfoError(errors);
   }
 
-  return validation.value;
+  return info as RuntimeSessionInfoResponse;
 }
 
 export function readRuntimeSessionEvent(event: unknown): RuntimeSessionEvent {
-  const validation = validateRuntimeSessionEvent(event);
-  if (!validation.ok) {
-    throw new SkenionRuntimeSessionEventError(validation.errors);
+  const errors = runtimeSessionEventErrors(event);
+  if (errors.length > 0) {
+    throw new SkenionRuntimeSessionEventError(errors);
   }
 
-  return validation.value;
+  return event as RuntimeSessionEvent;
 }
 
 export function parseRuntimeSessionEvent(message: string | { data: string }): RuntimeSessionEvent {
@@ -410,17 +694,19 @@ export function parseRuntimeSessionEvent(message: string | { data: string }): Ru
 }
 
 export function readRuntimeHealth(value: unknown): RuntimeHealth {
-  if (!isRuntimeHealth(value)) {
-    throw new SkenionRuntimeClientError(["invalid runtime health response"]);
+  const errors = runtimeHealthErrors(value);
+  if (errors.length > 0) {
+    throw new SkenionRuntimeClientError(errors);
   }
-  return value;
+  return value as RuntimeHealth;
 }
 
 export function readRuntimeInfo(value: unknown): RuntimeInfo {
-  if (!isRuntimeInfo(value)) {
-    throw new SkenionRuntimeClientError(["invalid runtime info response"]);
+  const errors = runtimeInfoErrors(value);
+  if (errors.length > 0) {
+    throw new SkenionRuntimeClientError(errors);
   }
-  return value;
+  return value as RuntimeInfo;
 }
 
 export function runtimeEndpointBaseUrl(profile: RuntimeConnectionProfile): string {

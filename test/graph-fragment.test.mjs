@@ -20,14 +20,14 @@ import {
 function node(id, portId, direction) {
   return {
     id,
-    kind: "core.value",
+    kind: "object.core.float",
     kindVersion: "0.1.0",
     params: {},
     ports: [
       {
         id: portId,
         direction,
-        type: "number.float"
+        type: "value.core.float32"
       }
     ]
   };
@@ -43,12 +43,12 @@ const middleNode = {
     {
       id: "in",
       direction: "input",
-      type: "number.float"
+      type: "value.core.float32"
     },
     {
       id: "out",
       direction: "output",
-      type: "number.float"
+      type: "value.core.float32"
     }
   ]
 };
@@ -208,7 +208,7 @@ test("source metadata helpers preserve patch-library and help source identity", 
         kind: "help-working-copy",
         workingCopyId: "help-copy-1",
         sourcePackageId: "skenion/core",
-        sourcePatchId: "help.core.value"
+        sourcePatchId: "help.core.float"
       },
       immutable: true
     }
@@ -404,6 +404,27 @@ test("invalid fragments, requests, and responses are rejected", () => {
       }),
     SkenionPasteResponseError
   );
+  assert.throws(
+    () =>
+      readPasteGraphFragmentResponse({
+        schema: "skenion.runtime.paste.response",
+        schemaVersion: "0.2.0",
+        ok: true,
+        applied: true,
+        conflict: false,
+        target,
+        revisionBefore: "rev-1",
+        revisionAfter: null,
+        historyEntryId: null,
+        idRemap: {
+          nodeIdMap: {},
+          edgeIdMap: {},
+          omittedEdgeIds: []
+        },
+        diagnostics: []
+      }),
+    SkenionPasteResponseError
+  );
 
   assert.throws(
     () =>
@@ -415,6 +436,20 @@ test("invalid fragments, requests, and responses are rejected", () => {
             baseRevision: ""
           },
           fragment
+        }
+      }),
+    SkenionPasteRequestError
+  );
+  assert.throws(
+    () =>
+      createPasteGraphFragmentOperation({
+        id: "op.invalid.attribution",
+        request: createPasteGraphFragmentRequest({
+          target,
+          fragment
+        }),
+        attribution: {
+          actorId: 7
         }
       }),
     SkenionPasteRequestError
