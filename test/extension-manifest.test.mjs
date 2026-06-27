@@ -11,7 +11,7 @@ import {
 const valueOut = definePort({
   id: "out",
   direction: "output",
-  type: "control.number.float",
+  type: "value.core.float32",
   rate: "control"
 });
 
@@ -38,7 +38,7 @@ test("current node definition helper returns normalized 0.1 manifests", () => {
       {
         id: "enabled",
         direction: "input",
-        type: "control.bool",
+        type: "value.core.bool",
         rate: "control",
         triggerMode: "latched",
         defaultValue: true
@@ -50,8 +50,8 @@ test("current node definition helper returns normalized 0.1 manifests", () => {
   assert.equal(manifest.schema, "skenion.node.definition");
   assert.equal(manifest.schemaVersion, "0.1.0");
   assert.equal(manifest.version, "0.1.0");
-  assert.equal(manifest.ports[0].type, "control.bool");
-  assert.equal(manifest.ports[1].type, "control.number.float");
+  assert.equal(manifest.ports[0].type, "value.core.bool");
+  assert.equal(manifest.ports[1].type, "value.core.float32");
 });
 
 test("current node definition helper rejects unsupported versions and invalid ports", () => {
@@ -83,7 +83,7 @@ test("current node definition helper rejects unsupported versions and invalid po
 
 test("current extension package helper returns a validated package manifest", () => {
   const node = defineNodeDefinition({
-    id: "core.float",
+    id: "object.core.float",
     version: "0.1.0",
     displayName: "Float",
     category: "Core",
@@ -100,7 +100,7 @@ test("current extension package helper returns a validated package manifest", ()
     nodes: [node],
     help: [
       {
-        nodeId: "core.float",
+        nodeId: "object.core.float",
         markdownPath: "help/float.md"
       }
     ],
@@ -108,7 +108,7 @@ test("current extension package helper returns a validated package manifest", ()
       {
         id: "float-baseline",
         kind: "node",
-        target: "core.float",
+        target: "object.core.float",
         fixturePath: "tests/float.input.json",
         expectedPath: "tests/float.expected.json"
       }
@@ -118,7 +118,7 @@ test("current extension package helper returns a validated package manifest", ()
   assert.equal(manifest.schema, "skenion.extension.manifest");
   assert.equal(manifest.schemaVersion, "0.1.0");
   assert.equal(manifest.runtimeAbiVersion, "0.1.0");
-  assert.equal(manifest.provides.nodes?.[0].id, "core.float");
+  assert.equal(manifest.provides.nodes?.[0].id, "object.core.float");
   assert.equal(manifest.provides.help?.[0].markdownPath, "help/float.md");
   assert.equal(manifest.tests?.[0].id, "float-baseline");
 });

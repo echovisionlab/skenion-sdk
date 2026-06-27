@@ -25,9 +25,9 @@ import {
 const valueOutPort = definePort({
   id: "out",
   direction: "output",
-  type: "control.number.float",
+  type: "value.core.float32",
   rate: "control",
-  accepts: ["control.number.float"],
+  accepts: ["value.core.float32"],
   fanOutPolicy: "allow",
   description: "Outputs the current value"
 });
@@ -35,7 +35,7 @@ const valueOutPort = definePort({
 const valueInPort = definePort({
   id: "in",
   direction: "input",
-  type: "control.number.float",
+  type: "value.core.float32",
   rate: "control",
   defaultValue: 0,
   required: true,
@@ -48,7 +48,7 @@ const valueInPort = definePort({
 
 const inletNode = defineGraphNode({
   id: "patch.inlet",
-  kind: "core.inlet",
+  kind: "object.core.inlet",
   params: {
     portId: "value",
     label: "Value"
@@ -58,7 +58,7 @@ const inletNode = defineGraphNode({
 
 const outletNode = defineGraphNode({
   id: "patch.outlet",
-  kind: "core.outlet",
+  kind: "object.core.outlet",
   kindVersion: "0.1.0",
   params: {
     portId: "scaled",
@@ -69,7 +69,7 @@ const outletNode = defineGraphNode({
     {
       id: "aux",
       direction: "input",
-      type: "control.number.float",
+      type: "value.core.float32",
       minPorts: 0,
       maxPorts: 4,
       ordered: true,
@@ -84,13 +84,13 @@ const patchEdge = {
   id: "edge.patch.value",
   source: { nodeId: "patch.inlet", portId: "out" },
   target: { nodeId: "patch.outlet", portId: "in" },
-  resolvedType: "control.number.float",
+  resolvedType: "value.core.float32",
   enabled: true
 };
 
 const rootFloatNode = defineGraphNode({
   id: "root.float",
-  kind: "core.float",
+  kind: "object.core.float",
   kindVersion: "0.1.0",
   params: {
     value: 0.5
@@ -183,7 +183,7 @@ test("current 0.1 node-definition helper validates ports and strict versions", (
     kind: "core.empty"
   });
   const minimal = defineNodeDefinition({
-    id: "core.float",
+    id: "object.core.float",
     version: "0.1.0",
     displayName: "Float",
     category: "Core",
@@ -206,7 +206,7 @@ test("current 0.1 node-definition helper validates ports and strict versions", (
       {
         id: "inputs",
         direction: "input",
-        type: "control.number.float",
+        type: "value.core.float32",
         minPorts: 1,
         maxPorts: 8
       }
@@ -231,7 +231,7 @@ test("current 0.1 node-definition helper validates ports and strict versions", (
   assert.equal(minimal.schemaVersion, "0.1.0");
   assert.equal(minimal.state.persistent, false);
   assert.equal(stateDefault.state.persistent, false);
-  assert.equal(full.ports[0].type, "control.number.float");
+  assert.equal(full.ports[0].type, "value.core.float32");
   assert.equal(full.portGroups?.[0].maxPorts, 8);
   assert.equal(full.surface?.palette, "direct");
 
@@ -424,7 +424,7 @@ test("current helpers reject invalid graph, patch, project, and patch-library in
       definePort({
         id: "",
         direction: "input",
-        type: "control.number.float"
+        type: "value.core.float32"
       }),
     SkenionProjectAuthoringError
   );

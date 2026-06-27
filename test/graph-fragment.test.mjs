@@ -20,14 +20,14 @@ import {
 function node(id, portId, direction) {
   return {
     id,
-    kind: "core.float",
+    kind: "object.core.float",
     kindVersion: "0.1.0",
     params: {},
     ports: [
       {
         id: portId,
         direction,
-        type: "control.number.float"
+        type: "value.core.float32"
       }
     ]
   };
@@ -43,12 +43,12 @@ const middleNode = {
     {
       id: "in",
       direction: "input",
-      type: "control.number.float"
+      type: "value.core.float32"
     },
     {
       id: "out",
       direction: "output",
-      type: "control.number.float"
+      type: "value.core.float32"
     }
   ]
 };

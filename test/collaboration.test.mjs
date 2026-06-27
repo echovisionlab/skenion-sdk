@@ -44,14 +44,14 @@ const causal = createRuntimeCollaborationCausalMetadata({
 
 const node = {
   id: "node-1",
-  kind: "core.float",
+  kind: "object.core.float",
   kindVersion: "0.1.0",
   params: {},
   ports: [
     {
       id: "out",
       direction: "output",
-      type: "control.number.float"
+      type: "value.core.float32"
     }
   ]
 };
