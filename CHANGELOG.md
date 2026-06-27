@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.47.0](https://github.com/skenion/skenion-sdk/compare/v0.46.0...v0.47.0) (2026-06-27)
+
+
+### Features
+
+* **sdk:** support contracts 0.52 line ([#72](https://github.com/skenion/skenion-sdk/issues/72)) ([0726b90](https://github.com/skenion/skenion-sdk/commit/0726b909333aff47fbf6a21f3de815fdb627a0ef))
+
 ## [0.46.0](https://github.com/skenion/skenion-sdk/compare/v0.45.2...v0.46.0) (2026-06-26)
 
 
