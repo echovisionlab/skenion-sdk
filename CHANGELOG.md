@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.48.0](https://github.com/skenion/skenion-sdk/compare/v0.47.0...v0.48.0) (2026-06-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* **contracts:** support Contracts 0.54 document identity
+
+### Features
+
+* **contracts:** support Contracts 0.54 document identity ([c018a77](https://github.com/skenion/skenion-sdk/commit/c018a77dd37c974f328752e882b09b2c40187f61))
+
 ## [0.47.0](https://github.com/skenion/skenion-sdk/compare/v0.46.0...v0.47.0) (2026-06-27)
 
 
