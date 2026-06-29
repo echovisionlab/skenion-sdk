@@ -35,10 +35,10 @@
     "test": "node --test test/*.test.mjs"
   },
   "peerDependencies": {
-    "@skenion/contracts": ">=0.52.0 <0.53.0"
+    "@skenion/contracts": ">=0.54.0 <0.55.0"
   },
   "devDependencies": {
-    "@skenion/contracts": ">=0.52.0 <0.53.0",
+    "@skenion/contracts": ">=0.54.0 <0.55.0",
     "typescript": "^5.9.3"
   },
   "packageManager": "pnpm@10.12.4"

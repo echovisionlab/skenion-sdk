@@ -62,6 +62,7 @@ export interface DefinePatchDefinitionOptions {
 
 export interface DefineProjectDocumentOptions {
   id: string;
+  documentId: string;
   revision: string;
   graph: GraphDocumentV01;
   metadata?: ProjectMetadataV01;
@@ -260,6 +261,7 @@ export function defineProjectDocument(options: DefineProjectDocumentOptions): Pr
     schema: "skenion.project",
     schemaVersion: CURRENT_SCHEMA_VERSION,
     id: options.id,
+    documentId: options.documentId,
     revision: options.revision,
     graph: options.graph,
     viewState: options.viewState ?? createDefaultViewStateForGraph(options.graph),

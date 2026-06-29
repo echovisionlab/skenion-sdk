@@ -22,7 +22,7 @@ concurrency:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
-  CONTRACTS_RANGE: ">=0.52.0 <0.53.0"
+  CONTRACTS_RANGE: ">=0.54.0 <0.55.0"
 
 jobs:
   npm:

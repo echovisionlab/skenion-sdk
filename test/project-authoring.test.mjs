@@ -141,6 +141,7 @@ test("current 0.1 helpers build graph, patch library, project, and patch contrac
   const library = definePatchLibrary([patch, patchWithDefaultView]);
   const project = defineProjectDocument({
     id: "project.current",
+    documentId: "00000000-0000-4000-8000-000000000201",
     revision: "rev-project-1",
     metadata: {
       title: "Current 0.1 Project",
@@ -161,6 +162,7 @@ test("current 0.1 helpers build graph, patch library, project, and patch contrac
   assert.equal(readGraphDocument(rootGraph).schemaVersion, "0.1.0");
   assert.equal(readPatchDefinition(patch).viewState, explicitPatchView);
   assert.equal(patchWithDefaultView.viewState?.canvas.nodes["patch.inlet"].x, 96);
+  assert.equal(project.documentId, "00000000-0000-4000-8000-000000000201");
   assert.equal(readProjectDocument(project).patchLibrary.length, 2);
   assert.equal(project.metadata?.title, "Current 0.1 Project");
   assert.equal(project.tutorial?.step, 1);
@@ -384,6 +386,7 @@ test("current readers reject unsupported graph and project schema versions", () 
   });
   const project = defineProjectDocument({
     id: "project.valid",
+    documentId: "00000000-0000-4000-8000-000000000202",
     revision: "rev-valid",
     graph
   });
@@ -407,6 +410,7 @@ test("current helpers reject invalid graph, patch, project, and patch-library in
   });
   const validProject = defineProjectDocument({
     id: "project.minimal",
+    documentId: "00000000-0000-4000-8000-000000000203",
     revision: "rev-project-minimal",
     graph: validGraph
   });
@@ -470,6 +474,7 @@ test("current helpers reject invalid graph, patch, project, and patch-library in
     () =>
       defineProjectDocument({
         id: "project.invalid",
+        documentId: "00000000-0000-4000-8000-000000000204",
         revision: "rev-invalid",
         graph: validGraph,
         viewState: {
