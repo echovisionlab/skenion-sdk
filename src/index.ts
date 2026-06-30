@@ -29,7 +29,7 @@ export {
   createDefaultViewStateForGraph,
   createGraphTargetRef,
   defineGraphDocument,
-  defineGraphNode,
+  defineObjectNode,
   defineNodeDefinition,
   definePatchDefinition,
   definePatchLibrary,
@@ -38,10 +38,22 @@ export {
   derivePatchContract,
   deriveProjectPatchContracts,
   patchPath,
+  parseObjectSpec,
   readGraphDocument,
   readPatchDefinition,
   readProjectDocument
 } from "./project-authoring.js";
+export {
+  SkenionPackageManifestError,
+  defineObject,
+  definePackageManifest
+} from "./package-manifest.js";
+export {
+  SkenionObjectCatalogError,
+  createObjectNodeFromCatalogEntry,
+  objectSpecForCatalogEntry,
+  resolveCatalogObjectSpec
+} from "./object-catalog.js";
 export {
   SKENION_GRAPH_FRAGMENT_CLIPBOARD_TYPE,
   SkenionGraphFragmentError,
@@ -144,8 +156,8 @@ export type {
 export type {
   CreateGraphTargetRefOptions,
   DefineGraphDocumentOptions,
-  DefineGraphNodeOptions,
   DefineNodeDefinitionOptions,
+  DefineObjectNodeOptions,
   DefinePatchDefinitionOptions,
   DefinePortOptions,
   DefineProjectDocumentOptions,
@@ -153,6 +165,16 @@ export type {
   HelpWorkingCopyPathOptions,
   PackagePatchPathOptions
 } from "./project-authoring.js";
+export type {
+  DefinedObjectDisplayOptions,
+  DefinedPackageObject,
+  DefineObjectOptions,
+  DefinePackageManifestOptions
+} from "./package-manifest.js";
+export type {
+  CatalogObjectSpecResolution,
+  CreateObjectNodeFromCatalogEntryOptions
+} from "./object-catalog.js";
 export type {
   CreateGraphFragmentOptions,
   CreatePasteGraphFragmentOperationOptions,

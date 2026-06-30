@@ -2,8 +2,10 @@ import {
   createDefaultViewStateForGraph as createDefaultViewStateForGraphContract,
   derivePatchContractV01,
   derivePatchContractsV01,
+  parseObjectSpecV01,
   validateGraphDocument,
   validateNodeDefinition,
+  validateObjectSpecParseResult,
   validatePasteGraphFragmentRequest,
   validatePatchDefinitionV01,
   validateProjectDocument,
@@ -20,6 +22,9 @@ import type {
   NodeExecutionV01,
   NodeStateV01,
   NodeSurfaceV01,
+  ObjectImplementationRefV01,
+  ObjectResolutionV01,
+  ObjectSpecParseResultV01,
   PatchContractV01,
   PatchDefinitionV01,
   PatchPath,
@@ -35,10 +40,11 @@ const CURRENT_SCHEMA_VERSION = "0.1.0";
 
 export interface DefinePortOptions extends PortSpecV01 {}
 
-export interface DefineGraphNodeOptions {
+export interface DefineObjectNodeOptions {
   id: string;
-  kind: string;
-  kindVersion?: string;
+  objectSpec: string;
+  implementation?: ObjectImplementationRefV01;
+  objectResolution?: ObjectResolutionV01;
   params?: Record<string, unknown>;
   ports?: PortSpecV01[];
   portGroups?: PortGroupSpecV01[];
@@ -145,6 +151,19 @@ function validatePatchPath(path: PatchPath): PatchPath {
   }).path;
 }
 
+export function parseObjectSpec(input: string): ObjectSpecParseResultV01 {
+  return readAuthoringValidation(validateObjectSpecParseResult(parseObjectSpecV01(input)));
+}
+
+function normalizeObjectSpec(input: string): string {
+  const parsed = parseObjectSpec(input);
+  if (!parsed.ok) {
+    throw new SkenionProjectAuthoringError(parsed.diagnostics.map((diagnostic) => diagnostic.message));
+  }
+
+  return parsed.displayText;
+}
+
 function requireCurrentVersion(field: string, value: string): void {
   if (value !== CURRENT_SCHEMA_VERSION) {
     throw new SkenionProjectAuthoringError([
@@ -153,14 +172,14 @@ function requireCurrentVersion(field: string, value: string): void {
   }
 }
 
-function validateNodePortsForAuthoring(node: GraphNodeV01): void {
+function validateNodePortsForAuthoring(node: GraphNodeV01 & { objectSpec: string }): void {
   readAuthoringValidation(
     validateNodeDefinition({
       schema: "skenion.node.definition",
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      id: node.id,
-      version: node.kindVersion,
-      displayName: node.kind,
+      id: "validation.object-node",
+      version: CURRENT_SCHEMA_VERSION,
+      displayName: node.objectSpec,
       category: "Graph",
       ports: node.ports,
       ...(node.portGroups === undefined ? {} : { portGroups: node.portGroups }),
@@ -182,23 +201,21 @@ export function definePort(options: DefinePortOptions): PortSpecV01 {
     ...(options.accepts === undefined ? {} : { accepts: [...options.accepts] })
   };
 
-  defineGraphNode({
+  defineObjectNode({
     id: "validation.port",
-    kind: "validation.port",
+    objectSpec: "validation.port",
     ports: [port]
   });
 
   return port;
 }
 
-export function defineGraphNode(options: DefineGraphNodeOptions): GraphNodeV01 {
-  const kindVersion = options.kindVersion ?? CURRENT_SCHEMA_VERSION;
-  requireCurrentVersion("kindVersion", kindVersion);
-
-  const node: GraphNodeV01 = {
+export function defineObjectNode(options: DefineObjectNodeOptions): GraphNodeV01 {
+  const node: GraphNodeV01 & { objectSpec: string } = {
     id: options.id,
-    kind: options.kind,
-    kindVersion,
+    objectSpec: normalizeObjectSpec(options.objectSpec),
+    ...(options.implementation === undefined ? {} : { implementation: options.implementation }),
+    ...(options.objectResolution === undefined ? {} : { objectResolution: options.objectResolution }),
     params: { ...(options.params ?? {}) },
     ports: [...(options.ports ?? [])],
     ...(options.portGroups === undefined ? {} : { portGroups: [...options.portGroups] })
