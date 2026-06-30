@@ -20,8 +20,7 @@ import {
 function node(id, portId, direction) {
   return {
     id,
-    kind: "object.core.float",
-    kindVersion: "0.1.0",
+    objectSpec: direction === "output" ? "float" : "print",
     params: {},
     ports: [
       {
@@ -36,8 +35,7 @@ function node(id, portId, direction) {
 const sourceNode = node("source", "out", "output");
 const middleNode = {
   id: "middle",
-  kind: "core.scale",
-  kindVersion: "0.1.0",
+  objectSpec: "* 2",
   params: {},
   ports: [
     {

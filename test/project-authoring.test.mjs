@@ -8,8 +8,8 @@ import {
   createRuntimeCollaborationCausalMetadata,
   createRuntimeCollaborationChangeSetOperation,
   defineGraphDocument,
-  defineGraphNode,
   defineNodeDefinition,
+  defineObjectNode,
   definePatchDefinition,
   definePatchLibrary,
   definePort,
@@ -46,9 +46,15 @@ const valueInPort = definePort({
   description: "Receives the incoming value"
 });
 
-const inletNode = defineGraphNode({
+const inletNode = defineObjectNode({
   id: "patch.inlet",
-  kind: "object.core.inlet",
+  objectSpec: "inlet value",
+  implementation: {
+    provider: {
+      kind: "core"
+    },
+    objectId: "inlet"
+  },
   params: {
     portId: "value",
     label: "Value"
@@ -56,10 +62,15 @@ const inletNode = defineGraphNode({
   ports: [valueOutPort]
 });
 
-const outletNode = defineGraphNode({
+const outletNode = defineObjectNode({
   id: "patch.outlet",
-  kind: "object.core.outlet",
-  kindVersion: "0.1.0",
+  objectSpec: "outlet scaled",
+  implementation: {
+    provider: {
+      kind: "core"
+    },
+    objectId: "outlet"
+  },
   params: {
     portId: "scaled",
     label: "Scaled"
@@ -88,10 +99,9 @@ const patchEdge = {
   enabled: true
 };
 
-const rootFloatNode = defineGraphNode({
+const rootFloatNode = defineObjectNode({
   id: "root.float",
-  kind: "object.core.float",
-  kindVersion: "0.1.0",
+  objectSpec: "float 0.5",
   params: {
     value: 0.5
   },
@@ -180,9 +190,9 @@ test("current 0.1 helpers build graph, patch library, project, and patch contrac
 });
 
 test("current 0.1 node-definition helper validates ports and strict versions", () => {
-  const emptyGraphNode = defineGraphNode({
+  const emptyGraphNode = defineObjectNode({
     id: "core.empty",
-    kind: "core.empty"
+    objectSpec: "empty"
   });
   const minimal = defineNodeDefinition({
     id: "object.core.float",
@@ -255,10 +265,9 @@ test("current 0.1 node-definition helper validates ports and strict versions", (
   );
   assert.throws(
     () =>
-      defineGraphNode({
+      defineObjectNode({
         id: "core.old",
-        kind: "core.old",
-        kindVersion: "0.2.0"
+        objectSpec: "["
       }),
     SkenionProjectAuthoringError
   );
@@ -434,9 +443,9 @@ test("current helpers reject invalid graph, patch, project, and patch-library in
   );
   assert.throws(
     () =>
-      defineGraphNode({
+      defineObjectNode({
         id: "node.invalid",
-        kind: "core.invalid",
+        objectSpec: "invalid",
         ports: [
           valueInPort,
           {
