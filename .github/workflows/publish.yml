@@ -22,7 +22,6 @@ concurrency:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
-  CONTRACTS_RANGE: ">=0.54.0 <0.55.0"
 
 jobs:
   npm:
@@ -41,7 +40,7 @@ jobs:
             exit 1
           fi
 
-          sdk_version="${RELEASE_TAG#${prefix}}"
+          sdk_version="${RELEASE_TAG#"${prefix}"}"
           if ! [[ "${sdk_version}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
             echo "SDK release version ${sdk_version} must be SemVer-like x.y.z" >&2
             exit 1
@@ -71,10 +70,7 @@ jobs:
           const fs = require("node:fs");
 
           const sdkVersion = process.env.SDK_VERSION;
-          const contractsRange = process.env.CONTRACTS_RANGE;
           const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-          const peer = pkg.peerDependencies?.["@skenion/contracts"];
-          const dev = pkg.devDependencies?.["@skenion/contracts"];
           const errors = [];
 
           if (pkg.name !== "@skenion/sdk") {
@@ -85,18 +81,6 @@ jobs:
             errors.push(`package version ${pkg.version} must match SDK release tag ${sdkVersion}`);
           }
 
-          if (peer !== contractsRange) {
-            errors.push(
-              `@skenion/contracts peer dependency ${peer ?? "<missing>"} must be ${contractsRange}`
-            );
-          }
-
-          if (dev !== contractsRange) {
-            errors.push(
-              `@skenion/contracts devDependency ${dev ?? "<missing>"} must be ${contractsRange}`
-            );
-          }
-
           if (errors.length > 0) {
             for (const error of errors) {
               console.error(error);
@@ -105,10 +89,20 @@ jobs:
           }
           NODE
 
+          node scripts/validate-contracts-dependency-range.mjs
           echo "version=${SDK_VERSION}" >> "${GITHUB_OUTPUT}"
+          contracts_range="$(node <<'NODE'
+          const fs = require("node:fs");
+          const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+          console.log(pkg.peerDependencies["@skenion/contracts"]);
+          NODE
+          )"
+          echo "contracts_range=${contracts_range}" >> "${GITHUB_OUTPUT}"
       - id: contracts
         name: Resolve released contracts package
         shell: bash
+        env:
+          CONTRACTS_RANGE: ${{ steps.package.outputs.contracts_range }}
         run: |
           set -euo pipefail
 

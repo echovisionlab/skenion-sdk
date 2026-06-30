@@ -27,32 +27,6 @@ jobs:
           cache: pnpm
       - name: Validate SDK Contracts dependency range
         shell: bash
-        run: |
-          set -euo pipefail
-
-          node <<'NODE'
-          const fs = require("node:fs");
-
-          const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-          const expected = ">=0.54.0 <0.55.0";
-          const peer = pkg.peerDependencies?.["@skenion/contracts"];
-          const dev = pkg.devDependencies?.["@skenion/contracts"];
-          const errors = [];
-
-          if (peer !== expected) {
-            errors.push(`@skenion/contracts peer dependency must be ${expected}; received ${peer ?? "<missing>"}`);
-          }
-
-          if (dev !== expected) {
-            errors.push(`@skenion/contracts devDependency must be ${expected}; received ${dev ?? "<missing>"}`);
-          }
-
-          if (errors.length > 0) {
-            for (const error of errors) {
-              console.error(error);
-            }
-            process.exit(1);
-          }
-          NODE
+        run: node scripts/validate-contracts-dependency-range.mjs
       - run: pnpm install --frozen-lockfile
       - run: pnpm run ci
