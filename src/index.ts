@@ -127,9 +127,9 @@ export type {
   RuntimeCollaborationOperationBaseOptions,
   RuntimeCollaborationOperationBatch,
   RuntimeCollaborationOperationBatchResult,
-  RuntimeCollaborationOperationDiagnostic,
-  RuntimeCollaborationOperationDiagnosticCode,
-  RuntimeCollaborationOperationDiagnosticSeverity,
+  RuntimeCollaborationOperationIssue,
+  RuntimeCollaborationOperationIssueCode,
+  RuntimeCollaborationOperationIssueSeverity,
   RuntimeCollaborationOperationEnvelope,
   RuntimeCollaborationOperationPayload,
   RuntimeCollaborationOperationResult,
@@ -185,8 +185,8 @@ export type {
   PasteGraphFragmentResponse,
   PasteGraphFragmentResponseSummary,
   RuntimeOperationAttribution,
-  RuntimeOperationDiagnostic,
-  RuntimeOperationDiagnosticSeverity,
+  RuntimeOperationIssue,
+  RuntimeOperationIssueSeverity,
   RuntimeOperationEnvelope
 } from "./graph-fragment.js";
 export type {
@@ -195,9 +195,9 @@ export type {
   RuntimeConnectionProfile,
   RuntimeConnectionProfileMode,
   RuntimeConnectionProfileSummary,
-  RuntimeDiagnosticDetails,
-  RuntimeDiagnosticSeverityV01,
-  RuntimeDiagnosticV01,
+  RuntimeIssueDetails,
+  RuntimeIssueSeverityV01,
+  RuntimeIssueV01,
   RuntimeEndpointMetadata,
   RuntimeEventReplayCursorInput,
   RuntimeEventReplayCursorState,
@@ -228,9 +228,9 @@ export type {
   RuntimeSidecarTokenInfo
 } from "./runtime-client.js";
 export type {
-  CompatibilityMatrixDiagnostic,
-  CompatibilityMatrixDiagnosticCode,
-  CompatibilityMatrixDiagnosticComponent,
+  CompatibilityMatrixIssue,
+  CompatibilityMatrixIssueCode,
+  CompatibilityMatrixIssueComponent,
   CompatibilityMatrixValidationResult,
   ValidateCompatibilityMatrixForSdkOptions
 } from "./compatibility-matrix.js";

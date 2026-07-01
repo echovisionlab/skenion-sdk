@@ -158,7 +158,7 @@ export function parseObjectSpec(input: string): ObjectSpecParseResultV01 {
 function normalizeObjectSpec(input: string): string {
   const parsed = parseObjectSpec(input);
   if (!parsed.ok) {
-    throw new SkenionProjectAuthoringError(parsed.diagnostics.map((diagnostic) => diagnostic.message));
+    throw new SkenionProjectAuthoringError(parsed.issues.map((issue) => issue.message));
   }
 
   return parsed.displayText;

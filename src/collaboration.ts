@@ -120,9 +120,9 @@ export interface RuntimeCollaborationOperationBatch {
   submittedAt?: string;
 }
 
-export type RuntimeCollaborationOperationDiagnosticSeverity = "error" | "warning" | "info";
+export type RuntimeCollaborationOperationIssueSeverity = "error" | "warning" | "info";
 
-export type RuntimeCollaborationOperationDiagnosticCode =
+export type RuntimeCollaborationOperationIssueCode =
   | "base-revision-mismatch"
   | "causality-gap"
   | "duplicate-idempotency-key"
@@ -135,9 +135,9 @@ export type RuntimeCollaborationOperationDiagnosticCode =
   | "selection-expired"
   | "unsupported-operation";
 
-export interface RuntimeCollaborationOperationDiagnostic {
-  severity: RuntimeCollaborationOperationDiagnosticSeverity;
-  code: RuntimeCollaborationOperationDiagnosticCode;
+export interface RuntimeCollaborationOperationIssue {
+  severity: RuntimeCollaborationOperationIssueSeverity;
+  code: RuntimeCollaborationOperationIssueCode;
   message: string;
   path?: string;
   participantId?: string;
@@ -173,7 +173,7 @@ export type RuntimeCollaborationNackReason =
 export interface RuntimeCollaborationNack {
   reason: RuntimeCollaborationNackReason;
   retryable?: boolean;
-  diagnostics?: RuntimeCollaborationOperationDiagnostic[];
+  issues?: RuntimeCollaborationOperationIssue[];
 }
 
 export interface RuntimeCollaborationConflict {
@@ -208,7 +208,7 @@ export interface RuntimeCollaborationOperationResult {
   ack?: RuntimeCollaborationAck;
   nack?: RuntimeCollaborationNack;
   rebase?: RuntimeCollaborationRebase;
-  diagnostics: RuntimeCollaborationOperationDiagnostic[];
+  issues: RuntimeCollaborationOperationIssue[];
   createdAt: string;
 }
 
@@ -217,7 +217,7 @@ export interface RuntimeCollaborationOperationBatchResult {
   schemaVersion: "0.1.0";
   sessionId: string;
   results: RuntimeCollaborationOperationResult[];
-  diagnostics: RuntimeCollaborationOperationDiagnostic[];
+  issues: RuntimeCollaborationOperationIssue[];
   createdAt: string;
 }
 
@@ -635,7 +635,7 @@ function validateOperationResult(value: unknown): string[] {
   requireNonEmptyString(result.idempotencyKey, "/idempotencyKey", errors);
   requireOneOf(result.status, ["accepted", "duplicate", "rejected", "rebased"], "/status", errors);
   validateCausal(result.causal, "/causal", errors);
-  requireArray(result.diagnostics, "/diagnostics", errors);
+  requireArray(result.issues, "/issues", errors);
   requireNonEmptyString(result.createdAt, "/createdAt", errors);
 
   if ((result.status === "accepted" || result.status === "duplicate") && result.nack !== undefined) {
@@ -668,7 +668,7 @@ function validateOperationBatchResult(value: unknown): string[] {
       errors.push("/results/sessionId must match /sessionId");
     }
   }
-  requireArray(batch.diagnostics, "/diagnostics", errors);
+  requireArray(batch.issues, "/issues", errors);
   requireNonEmptyString(batch.createdAt, "/createdAt", errors);
   return errors;
 }

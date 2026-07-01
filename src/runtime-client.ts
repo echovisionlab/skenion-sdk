@@ -1,18 +1,18 @@
-export type RuntimeDiagnosticSeverityV01 = "error" | "warning" | "info";
+export type RuntimeIssueSeverityV01 = "error" | "warning" | "info";
 
-export type RuntimeDiagnosticDetails =
+export type RuntimeIssueDetails =
   | string
   | number
   | boolean
   | null
-  | RuntimeDiagnosticDetails[]
-  | { [key: string]: RuntimeDiagnosticDetails };
+  | RuntimeIssueDetails[]
+  | { [key: string]: RuntimeIssueDetails };
 
-export interface RuntimeDiagnosticV01 {
-  severity: RuntimeDiagnosticSeverityV01;
+export interface RuntimeIssueV01 {
+  severity: RuntimeIssueSeverityV01;
   message: string;
   code?: string;
-  details?: RuntimeDiagnosticDetails;
+  details?: RuntimeIssueDetails;
 }
 
 export interface RuntimeHealth {
@@ -95,7 +95,7 @@ export interface RuntimeSessionSnapshot {
   viewRevision: number;
   controlRevision: number;
   project: unknown;
-  diagnostics: RuntimeDiagnosticV01[];
+  issues: RuntimeIssueV01[];
   plan: Record<string, unknown> | null;
 }
 
@@ -109,7 +109,7 @@ export interface RuntimeSessionInfoResponse {
   profile: RuntimeConnectionProfile;
   capabilities: RuntimeSessionCapabilitySet;
   eventReplay: RuntimeEventReplayWindow;
-  diagnostics: RuntimeDiagnosticV01[];
+  issues: RuntimeIssueV01[];
 }
 
 export interface RuntimeHistory {
@@ -150,7 +150,7 @@ export interface RuntimeSessionEvent {
   history: RuntimeHistory;
   mutation?: Record<string, unknown>;
   replay: RuntimeEventReplayMetadata;
-  diagnostics: RuntimeDiagnosticV01[];
+  issues: RuntimeIssueV01[];
   createdAt: string;
 }
 
@@ -264,7 +264,7 @@ export interface RuntimeSidecarStartupResponse {
   health: RuntimeSidecarHealthInfo;
   token: RuntimeSidecarTokenInfo;
   shutdown: RuntimeSidecarShutdownInfo;
-  diagnostics: RuntimeDiagnosticV01[];
+  issues: RuntimeIssueV01[];
 }
 
 export interface RuntimeSidecarHealthResponse {
@@ -275,7 +275,7 @@ export interface RuntimeSidecarHealthResponse {
   runtime: RuntimeSidecarRuntimeInfo;
   endpoint: RuntimeEndpointMetadata;
   profile: RuntimeConnectionProfile;
-  diagnostics: RuntimeDiagnosticV01[];
+  issues: RuntimeIssueV01[];
 }
 
 export type RuntimeSidecarResponse =

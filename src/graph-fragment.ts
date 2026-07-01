@@ -81,10 +81,10 @@ export interface IdRemapResult {
   omittedEdgeIds: string[];
 }
 
-export type RuntimeOperationDiagnosticSeverity = "error" | "warning" | "info";
+export type RuntimeOperationIssueSeverity = "error" | "warning" | "info";
 
-export interface RuntimeOperationDiagnostic {
-  severity: RuntimeOperationDiagnosticSeverity;
+export interface RuntimeOperationIssue {
+  severity: RuntimeOperationIssueSeverity;
   code: string;
   message: string;
   path?: string;
@@ -109,7 +109,7 @@ export interface PasteGraphFragmentResponse {
   revisionAfter: string | null;
   historyEntryId: string | null;
   idRemap: IdRemapResult;
-  diagnostics: RuntimeOperationDiagnostic[];
+  issues: RuntimeOperationIssue[];
 }
 
 export interface PasteGraphFragmentResponseSummary {
@@ -121,7 +121,7 @@ export interface PasteGraphFragmentResponseSummary {
   revisionAfter: string | null;
   historyEntryId: string | null;
   idRemap: IdRemapResult;
-  diagnostics: PasteGraphFragmentResponse["diagnostics"];
+  issues: PasteGraphFragmentResponse["issues"];
   mapNodeId(id: string): string;
   mapEdgeId(id: string): string;
 }
@@ -295,8 +295,8 @@ function pasteGraphFragmentResponseErrors(response: unknown): string[] {
   requireStringMap(idRemap.nodeIdMap, "/idRemap/nodeIdMap", errors);
   requireStringMap(idRemap.edgeIdMap, "/idRemap/edgeIdMap", errors);
   requireStringArray(idRemap.omittedEdgeIds, "/idRemap/omittedEdgeIds", errors);
-  if (!Array.isArray(value.diagnostics)) {
-    errors.push("/diagnostics must be array");
+  if (!Array.isArray(value.issues)) {
+    errors.push("/issues must be array");
   }
 
   return errors;
@@ -564,7 +564,7 @@ export function readPasteGraphFragmentResponse(
     revisionAfter: value.revisionAfter,
     historyEntryId: value.historyEntryId,
     idRemap: value.idRemap,
-    diagnostics: value.diagnostics,
+    issues: value.issues,
     mapNodeId: (id: string) => value.idRemap.nodeIdMap[id] ?? id,
     mapEdgeId: (id: string) => value.idRemap.edgeIdMap[id] ?? id
   };

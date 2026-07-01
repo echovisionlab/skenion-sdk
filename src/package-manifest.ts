@@ -7,7 +7,7 @@ import type {
   PackageCategoryV01,
   PackageChecksumRefV01,
   PackageContractsSupportV01,
-  PackageDiagnosticV01,
+  PackageIssueV01,
   PackageEvidenceRefV01,
   PackageManifestV01,
   PackageNativeArtifactV01,
@@ -22,8 +22,8 @@ import {
 
 const CURRENT_SCHEMA_VERSION = "0.1.0";
 const DEFAULT_CONTRACTS_SUPPORT: PackageContractsSupportV01 = {
-  line: "0.56",
-  range: ">=0.56.0 <0.57.0"
+  line: "0.57",
+  range: ">=0.57.0 <0.58.0"
 };
 
 export interface DefinedObjectDisplayOptions {
@@ -63,7 +63,7 @@ export interface DefinePackageManifestOptions {
   checksums?: PackageChecksumRefV01[];
   evidence?: PackageEvidenceRefV01[];
   nativeArtifacts?: PackageNativeArtifactV01[];
-  diagnostics?: PackageDiagnosticV01[];
+  issues?: PackageIssueV01[];
 }
 
 export class SkenionPackageManifestError extends Error {
@@ -79,7 +79,7 @@ export class SkenionPackageManifestError extends Error {
 function normalizeObjectSpec(input: string): string {
   const parsed = parseObjectSpec(input);
   if (!parsed.ok) {
-    throw new SkenionPackageManifestError(parsed.diagnostics.map((diagnostic) => diagnostic.message));
+    throw new SkenionPackageManifestError(parsed.issues.map((issue) => issue.message));
   }
 
   return parsed.displayText;
@@ -163,7 +163,7 @@ export function definePackageManifest(options: DefinePackageManifestOptions): Pa
     checksums: [...(options.checksums ?? [])],
     evidence: [...(options.evidence ?? [])],
     ...(options.nativeArtifacts === undefined ? {} : { nativeArtifacts: [...options.nativeArtifacts] }),
-    ...(options.diagnostics === undefined ? {} : { diagnostics: [...options.diagnostics] })
+    ...(options.issues === undefined ? {} : { issues: [...options.issues] })
   };
 
   const validation = validatePackageManifestV01(manifest);

@@ -35,13 +35,13 @@ export type CatalogObjectSpecResolution =
       objectSpec: string;
       parse: ObjectSpecParseResultV01;
       entries: NodeCatalogEntryV01[];
-      diagnostics: string[];
+      issues: string[];
     }
   | {
       status: "unresolved";
       objectSpec: string;
       parse: ObjectSpecParseResultV01;
-      diagnostics: string[];
+      issues: string[];
     };
 
 export class SkenionObjectCatalogError extends Error {
@@ -66,7 +66,7 @@ function readCatalogSnapshot(snapshot: NodeCatalogSnapshotV01): NodeCatalogSnaps
 function normalizedObjectSpec(input: string): { spec: string; parse: ObjectSpecParseResultV01 } {
   const parsed = parseObjectSpec(input);
   if (!parsed.ok) {
-    throw new SkenionObjectCatalogError(parsed.diagnostics.map((diagnostic) => diagnostic.message));
+    throw new SkenionObjectCatalogError(parsed.issues.map((issue) => issue.message));
   }
 
   return { spec: parsed.displayText, parse: parsed };
@@ -138,7 +138,7 @@ export function resolveCatalogObjectSpec(
       status: "unresolved",
       objectSpec,
       parse: parsed,
-      diagnostics: parsed.diagnostics.map((diagnostic) => diagnostic.message)
+      issues: parsed.issues.map((issue) => issue.message)
     };
   }
 
@@ -157,7 +157,7 @@ export function resolveCatalogObjectSpec(
       objectSpec,
       parse: parsed,
       entries: matches,
-      diagnostics: [
+      issues: [
         `objectSpec ${JSON.stringify(objectSpec)} resolves to multiple catalog entries: ${matches
           .map((entry) => entry.catalogId)
           .join(", ")}`
@@ -169,6 +169,6 @@ export function resolveCatalogObjectSpec(
     status: "unresolved",
     objectSpec,
     parse: parsed,
-    diagnostics: [`objectSpec ${JSON.stringify(objectSpec)} is not present in the catalog`]
+    issues: [`objectSpec ${JSON.stringify(objectSpec)} is not present in the catalog`]
   };
 }

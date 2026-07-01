@@ -73,7 +73,7 @@ const sessionInfo = {
     viewRevision: 2,
     controlRevision: 4,
     project: null,
-    diagnostics: [],
+    issues: [],
     plan: null
   },
   profile: localManagedProfile,
@@ -92,7 +92,7 @@ const sessionInfo = {
     replayLimit: 512,
     overflow: false
   },
-  diagnostics: []
+  issues: []
 };
 
 const sessionEvent = {
@@ -108,7 +108,7 @@ const sessionEvent = {
     viewRevision: 2,
     controlRevision: 4,
     project: null,
-    diagnostics: [],
+    issues: [],
     plan: null
   },
   history: {
@@ -131,7 +131,7 @@ const sessionEvent = {
     },
     overflow: true
   },
-  diagnostics: [
+  issues: [
     {
       severity: "warning",
       message: "Requested replay cursor is older than the retained event window."
@@ -184,7 +184,7 @@ const startupResponse = {
     url: "http://127.0.0.1:49231/v0/sidecar/shutdown",
     scope: "owned-child-only"
   },
-  diagnostics: []
+  issues: []
 };
 
 const healthResponse = {
@@ -195,7 +195,7 @@ const healthResponse = {
   runtime: runtimeInfo,
   endpoint: remoteProfile.endpoint,
   profile: remoteProfile,
-  diagnostics: []
+  issues: []
 };
 
 test("runtime session URL helpers cover default and explicit session routes", () => {

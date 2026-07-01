@@ -39,8 +39,7 @@ function snapshot(entries) {
       algorithm: "sha256",
       value: "0".repeat(64)
     },
-    entries,
-    diagnosticNodeDefinitions: []
+    entries
   };
 
   return {
@@ -57,7 +56,7 @@ const manipulatorEntry = {
   provider: {
     kind: "package",
     packageId: "skenion/core",
-    version: "0.56.0"
+    version: "0.57.0"
   },
   definition: definition("skenion.core.manipulator", "Manipulator"),
   creatable: true,
@@ -117,7 +116,7 @@ test("catalog resolution treats bracket-equivalent specs as the same object synt
     provider: {
       kind: "package",
       packageId: "skenion/core",
-      version: "0.56.0"
+      version: "0.57.0"
     },
     definition: definition("skenion.core.oscillator", "Oscillator"),
     creatable: true,
@@ -132,7 +131,7 @@ test("catalog resolution treats bracket-equivalent specs as the same object synt
     provider: {
       kind: "package",
       packageId: "skenion/extra",
-      version: "0.56.0"
+      version: "0.57.0"
     },
     definition: definition("skenion.extra.oscillator", "Extra Oscillator"),
     creatable: true,

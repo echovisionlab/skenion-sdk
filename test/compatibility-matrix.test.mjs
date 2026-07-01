@@ -7,8 +7,8 @@ import {
   validateCompatibilityMatrixForSdk
 } from "../dist/index.js";
 
-const contractsRange = ">=0.56.0 <0.57.0";
-const contractsVersion = "0.56.0";
+const contractsRange = ">=0.57.0 <0.58.0";
+const contractsVersion = "0.57.0";
 const sdkVersion = "0.44.0";
 
 function registryPackage(ecosystem, name, version) {
@@ -23,8 +23,8 @@ function validCompatibilityMatrix() {
   return {
     schema: "skenion.compatibility-matrix",
     "schema-version": "0.1.0",
-    "matrix-id": "M06.95-0.56.0",
-    "contracts-line": "0.56",
+    "matrix-id": "M06.95-0.57.0",
+    "contracts-line": "0.57",
     "contracts-range": contractsRange,
     "protocol-baselines": {
       graph: "0.1",
@@ -62,11 +62,11 @@ function validate(matrix, options = {}) {
   });
 }
 
-function diagnosticCodes(result) {
-  return result.diagnostics.map((diagnostic) => diagnostic.code);
+function issueCodes(result) {
+  return result.issues.map((issue) => issue.code);
 }
 
-test("compatibility matrix helper accepts unequal SDK and Contracts component versions on the 0.56 line", () => {
+test("compatibility matrix helper accepts unequal SDK and Contracts component versions on the 0.57 line", () => {
   const matrix = validCompatibilityMatrix();
   const result = validate(matrix);
 
@@ -82,10 +82,10 @@ test("compatibility matrix helper accepts unequal SDK and Contracts component ve
   })["contracts-range"], contractsRange);
 });
 
-test("compatibility matrix helper accepts the explicit Contracts 0.56 peer range", () => {
+test("compatibility matrix helper accepts the explicit Contracts 0.57 peer range", () => {
   const result = validate(validCompatibilityMatrix(), {
-    contractsDependencyRange: ">=0.56.0 <0.57.0",
-    contractsPackageVersion: "0.56.0"
+    contractsDependencyRange: ">=0.57.0 <0.58.0",
+    contractsPackageVersion: "0.57.0"
   });
 
   assert.equal(result.ok, true);
@@ -96,8 +96,8 @@ test("compatibility matrix helper rejects stale exact, wildcard, and cross-line 
     const result = validate(validCompatibilityMatrix(), { contractsDependencyRange });
 
     assert.equal(result.ok, false);
-    assert.deepEqual(diagnosticCodes(result), ["contracts_dependency_range_mismatch"]);
-    assert.equal(result.diagnostics[0].field, "peerDependencies.@skenion/contracts");
+    assert.deepEqual(issueCodes(result), ["contracts_dependency_range_mismatch"]);
+    assert.equal(result.issues[0].field, "peerDependencies.@skenion/contracts");
   }
 });
 
@@ -108,8 +108,8 @@ test("compatibility matrix helper rejects mismatched matrix and SDK supported ra
   const result = validate(matrix);
 
   assert.equal(result.ok, false);
-  assert.ok(diagnosticCodes(result).includes("invalid_matrix"));
-  assert.ok(diagnosticCodes(result).includes("contracts_range_mismatch"));
+  assert.ok(issueCodes(result).includes("invalid_matrix"));
+  assert.ok(issueCodes(result).includes("contracts_range_mismatch"));
 });
 
 test("compatibility matrix helper rejects missing Contracts package and dependency evidence", () => {
@@ -118,7 +118,7 @@ test("compatibility matrix helper rejects missing Contracts package and dependen
   });
 
   assert.equal(result.ok, false);
-  assert.deepEqual(diagnosticCodes(result), [
+  assert.deepEqual(issueCodes(result), [
     "missing_contracts_dependency_range",
     "missing_contracts_package_version"
   ]);
@@ -130,8 +130,8 @@ test("compatibility matrix helper rejects incompatible installed Contracts versi
   });
 
   assert.equal(result.ok, false);
-  assert.deepEqual(diagnosticCodes(result), ["incompatible_contracts_package_version"]);
-  assert.match(result.diagnostics[0].message, />=0\.56\.0 <0\.57\.0/);
+  assert.deepEqual(issueCodes(result), ["incompatible_contracts_package_version"]);
+  assert.match(result.issues[0].message, />=0\.57\.0 <0\.58\.0/);
 });
 
 test("compatibility matrix helper rejects SDK package metadata mismatches without comparing to Contracts version", () => {
@@ -141,7 +141,7 @@ test("compatibility matrix helper rejects SDK package metadata mismatches withou
   });
 
   assert.equal(result.ok, false);
-  assert.deepEqual(diagnosticCodes(result), ["sdk_package_name_mismatch", "sdk_version_mismatch"]);
+  assert.deepEqual(issueCodes(result), ["sdk_package_name_mismatch", "sdk_version_mismatch"]);
 });
 
 test("compatibility matrix helper rejects malformed compatibility matrix documents", () => {
@@ -149,8 +149,8 @@ test("compatibility matrix helper rejects malformed compatibility matrix documen
   const wrongSchemaResult = validateCompatibilityMatrixForSdk({ schema: "not-a-matrix" });
 
   assert.equal(result.ok, false);
-  assert.deepEqual(diagnosticCodes(result), ["invalid_matrix"]);
+  assert.deepEqual(issueCodes(result), ["invalid_matrix"]);
   assert.equal(wrongSchemaResult.ok, false);
-  assert.ok(diagnosticCodes(wrongSchemaResult).every((code) => code === "invalid_matrix"));
+  assert.ok(issueCodes(wrongSchemaResult).every((code) => code === "invalid_matrix"));
   assert.throws(() => readCompatibilityMatrixForSdk("not a matrix"), SkenionCompatibilityMatrixError);
 });

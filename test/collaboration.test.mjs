@@ -84,7 +84,7 @@ function acceptedResult(operation) {
       },
       appliedAt: "2026-06-22T00:00:02.000Z"
     },
-    diagnostics: [],
+    issues: [],
     createdAt: "2026-06-22T00:00:02.000Z"
   };
 }
@@ -479,7 +479,7 @@ test("collaboration result and event readers parse valid envelopes and reject in
     schemaVersion: "0.1.0",
     sessionId: "session-a",
     results: [result],
-    diagnostics: [],
+    issues: [],
     createdAt: "2026-06-22T00:00:06.100Z"
   };
 

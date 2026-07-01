@@ -353,7 +353,7 @@ test("runtime paste response summary exposes id remap and revision information",
       },
       omittedEdgeIds: ["edge.external"]
     },
-    diagnostics: []
+    issues: []
   });
 
   assert.equal(summary.revisionBefore, "rev-1");
@@ -419,7 +419,7 @@ test("invalid fragments, requests, and responses are rejected", () => {
           edgeIdMap: {},
           omittedEdgeIds: []
         },
-        diagnostics: []
+        issues: []
       }),
     SkenionPasteResponseError
   );
@@ -466,7 +466,7 @@ test("invalid fragments, requests, and responses are rejected", () => {
   );
 });
 
-test("analyzeGraphFragment returns diagnostics without throwing", () => {
+test("analyzeGraphFragment returns issues without throwing", () => {
   const result = analyzeGraphFragment(
     {
       schema: "skenion.graph.fragment",
@@ -479,5 +479,5 @@ test("analyzeGraphFragment returns diagnostics without throwing", () => {
 
   assert.equal(result.ok, true);
   assert.deepEqual(result.omittedEdgeIds, ["edge.external"]);
-  assert.equal(result.diagnostics[0].severity, "warning");
+  assert.equal(result.issues[0].severity, "warning");
 });

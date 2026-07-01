@@ -5,9 +5,9 @@ import {
 } from "@skenion/contracts";
 import type { CompatibilityMatrixV01 } from "@skenion/contracts";
 
-export const SDK_SUPPORTED_CONTRACTS_RANGE = deriveV0CompatibilityRange("0.56.0");
+export const SDK_SUPPORTED_CONTRACTS_RANGE = deriveV0CompatibilityRange("0.57.0");
 
-export type CompatibilityMatrixDiagnosticCode =
+export type CompatibilityMatrixIssueCode =
   | "invalid_matrix"
   | "sdk_package_name_mismatch"
   | "sdk_version_mismatch"
@@ -17,14 +17,14 @@ export type CompatibilityMatrixDiagnosticCode =
   | "missing_contracts_package_version"
   | "incompatible_contracts_package_version";
 
-export type CompatibilityMatrixDiagnosticComponent =
+export type CompatibilityMatrixIssueComponent =
   | "matrix"
   | "sdk"
   | "contracts";
 
-export interface CompatibilityMatrixDiagnostic {
-  code: CompatibilityMatrixDiagnosticCode;
-  component: CompatibilityMatrixDiagnosticComponent;
+export interface CompatibilityMatrixIssue {
+  code: CompatibilityMatrixIssueCode;
+  component: CompatibilityMatrixIssueComponent;
   message: string;
   field?: string;
   expected?: string;
@@ -43,23 +43,23 @@ export type CompatibilityMatrixValidationResult =
   | {
       ok: true;
       value: CompatibilityMatrixV01;
-      diagnostics: [];
+      issues: [];
     }
   | {
       ok: false;
-      diagnostics: CompatibilityMatrixDiagnostic[];
+      issues: CompatibilityMatrixIssue[];
       value?: CompatibilityMatrixV01;
     };
 
 export class SkenionCompatibilityMatrixError extends Error {
-  readonly diagnostics: CompatibilityMatrixDiagnostic[];
+  readonly issues: CompatibilityMatrixIssue[];
   readonly errors: string[];
 
-  constructor(diagnostics: CompatibilityMatrixDiagnostic[]) {
-    const errors = diagnostics.map((diagnostic) => diagnostic.message);
+  constructor(issues: CompatibilityMatrixIssue[]) {
+    const errors = issues.map((issue) => issue.message);
     super(`Invalid skenion compatibility matrix for SDK: ${errors.join("; ")}`);
     this.name = "SkenionCompatibilityMatrixError";
-    this.diagnostics = diagnostics;
+    this.issues = issues;
     this.errors = errors;
   }
 }
@@ -85,15 +85,15 @@ function compatibilityMatrixPreflightValue(document: unknown): CompatibilityMatr
   return document as unknown as CompatibilityMatrixV01;
 }
 
-function rangeDiagnostic(
+function rangeIssue(
   field: string,
   expected: string,
   actual: string,
   code: Extract<
-    CompatibilityMatrixDiagnosticCode,
+    CompatibilityMatrixIssueCode,
     "contracts_range_mismatch" | "contracts_dependency_range_mismatch"
   > = "contracts_range_mismatch"
-): CompatibilityMatrixDiagnostic[] {
+): CompatibilityMatrixIssue[] {
   if (actual === expected) {
     return [];
   }
@@ -110,17 +110,17 @@ function rangeDiagnostic(
   ];
 }
 
-function sdkMetadataDiagnostics(
+function sdkMetadataIssues(
   matrix: CompatibilityMatrixV01,
   options: ValidateCompatibilityMatrixForSdkOptions
-): CompatibilityMatrixDiagnostic[] {
+): CompatibilityMatrixIssue[] {
   const expectedContractsRange = options.expectedContractsRange ?? SDK_SUPPORTED_CONTRACTS_RANGE;
   const sdkPackageName = options.sdkPackageName ?? "@skenion/sdk";
-  const diagnostics: CompatibilityMatrixDiagnostic[] = [];
+  const issues: CompatibilityMatrixIssue[] = [];
 
-  diagnostics.push(
-    ...rangeDiagnostic("contracts-range", expectedContractsRange, matrix["contracts-range"]),
-    ...rangeDiagnostic(
+  issues.push(
+    ...rangeIssue("contracts-range", expectedContractsRange, matrix["contracts-range"]),
+    ...rangeIssue(
       "components.sdk.supported-contracts-range",
       matrix["contracts-range"],
       matrix.components.sdk["supported-contracts-range"]
@@ -128,7 +128,7 @@ function sdkMetadataDiagnostics(
   );
 
   if (matrix.components.sdk.npm.name !== sdkPackageName) {
-    diagnostics.push({
+    issues.push({
       code: "sdk_package_name_mismatch",
       component: "sdk",
       field: "components.sdk.npm.name",
@@ -142,7 +142,7 @@ function sdkMetadataDiagnostics(
     options.sdkPackageVersion !== undefined &&
     matrix.components.sdk.npm.version !== options.sdkPackageVersion
   ) {
-    diagnostics.push({
+    issues.push({
       code: "sdk_version_mismatch",
       component: "sdk",
       field: "components.sdk.npm.version",
@@ -153,7 +153,7 @@ function sdkMetadataDiagnostics(
   }
 
   if (options.contractsDependencyRange === undefined) {
-    diagnostics.push({
+    issues.push({
       code: "missing_contracts_dependency_range",
       component: "contracts",
       field: "peerDependencies.@skenion/contracts",
@@ -161,8 +161,8 @@ function sdkMetadataDiagnostics(
       message: `@skenion/contracts peer dependency range must be declared as ${expectedContractsRange}`
     });
   } else {
-    diagnostics.push(
-      ...rangeDiagnostic(
+    issues.push(
+      ...rangeIssue(
         "peerDependencies.@skenion/contracts",
         expectedContractsRange,
         options.contractsDependencyRange,
@@ -172,7 +172,7 @@ function sdkMetadataDiagnostics(
   }
 
   if (options.contractsPackageVersion === undefined) {
-    diagnostics.push({
+    issues.push({
       code: "missing_contracts_package_version",
       component: "contracts",
       field: "installed @skenion/contracts version",
@@ -180,7 +180,7 @@ function sdkMetadataDiagnostics(
       message: `installed @skenion/contracts version evidence is required and must satisfy ${expectedContractsRange}`
     });
   } else if (!satisfiesV0CompatibilityRange(options.contractsPackageVersion, expectedContractsRange)) {
-    diagnostics.push({
+    issues.push({
       code: "incompatible_contracts_package_version",
       component: "contracts",
       field: "installed @skenion/contracts version",
@@ -190,20 +190,20 @@ function sdkMetadataDiagnostics(
     });
   }
 
-  return diagnostics;
+  return issues;
 }
 
 function compatibilityMatrixValidationResultForValue(
   value: CompatibilityMatrixV01,
   options: ValidateCompatibilityMatrixForSdkOptions
 ): CompatibilityMatrixValidationResult {
-  const diagnostics = sdkMetadataDiagnostics(value, options);
+  const issues = sdkMetadataIssues(value, options);
 
-  if (diagnostics.length > 0) {
-    return { ok: false, value, diagnostics };
+  if (issues.length > 0) {
+    return { ok: false, value, issues };
   }
 
-  return { ok: true, value, diagnostics: [] };
+  return { ok: true, value, issues: [] };
 }
 
 export function validateCompatibilityMatrixForSdk(
@@ -216,18 +216,18 @@ export function validateCompatibilityMatrixForSdk(
   }
 
   const candidate = compatibilityMatrixPreflightValue(document);
-  const sdkDiagnostics = candidate === undefined ? [] : sdkMetadataDiagnostics(candidate, options);
+  const sdkIssues = candidate === undefined ? [] : sdkMetadataIssues(candidate, options);
 
   return {
     ok: false,
     ...(candidate === undefined ? {} : { value: candidate }),
-    diagnostics: [
+    issues: [
       ...validation.errors.map((error) => ({
         code: "invalid_matrix",
         component: "matrix",
         message: `compatibility matrix does not match skenion.compatibility-matrix 0.1.0: ${error}`
-      }) satisfies CompatibilityMatrixDiagnostic),
-      ...sdkDiagnostics
+      }) satisfies CompatibilityMatrixIssue),
+      ...sdkIssues
     ]
   };
 }
@@ -238,7 +238,7 @@ export function readCompatibilityMatrixForSdk(
 ): CompatibilityMatrixV01 {
   const validation = validateCompatibilityMatrixForSdk(document, options);
   if (!validation.ok) {
-    throw new SkenionCompatibilityMatrixError(validation.diagnostics);
+    throw new SkenionCompatibilityMatrixError(validation.issues);
   }
 
   return validation.value;
