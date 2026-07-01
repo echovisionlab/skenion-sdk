@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.50.0](https://github.com/skenion/skenion-sdk/compare/v0.49.0...v0.50.0) (2026-07-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* expose issue terminology
+
+### Features
+
+* expose issue terminology ([c46d0c9](https://github.com/skenion/skenion-sdk/commit/c46d0c97c11870dfc6ea39f48c423a9ee533c583))
+
 ## [0.49.0](https://github.com/skenion/skenion-sdk/compare/v0.48.0...v0.49.0) (2026-06-30)
 
 
