@@ -1,19 +1,14 @@
-import {
-  deriveV0CompatibilityRange,
-  satisfiesV0CompatibilityRange,
-  validateCompatibilityMatrixV01
-} from "@skenion/contracts";
+import { validateCompatibilityMatrixV01 } from "@skenion/contracts";
 import type { CompatibilityMatrixV01 } from "@skenion/contracts";
-
-export const SDK_SUPPORTED_CONTRACTS_RANGE = deriveV0CompatibilityRange("0.58.0");
+import { SDK_REQUIRED_CONTRACTS_VERSION } from "./contracts-version.js";
 
 export type CompatibilityMatrixIssueCode =
   | "invalid_matrix"
   | "sdk_package_name_mismatch"
   | "sdk_version_mismatch"
-  | "contracts_range_mismatch"
-  | "missing_contracts_dependency_range"
-  | "contracts_dependency_range_mismatch"
+  | "contracts_version_mismatch"
+  | "missing_contracts_dependency_version"
+  | "contracts_dependency_version_mismatch"
   | "missing_contracts_package_version"
   | "incompatible_contracts_package_version";
 
@@ -34,9 +29,9 @@ export interface CompatibilityMatrixIssue {
 export interface ValidateCompatibilityMatrixForSdkOptions {
   sdkPackageName?: string;
   sdkPackageVersion?: string;
-  contractsDependencyRange?: string;
+  contractsDependencyVersion?: string;
   contractsPackageVersion?: string;
-  expectedContractsRange?: string;
+  expectedContractsVersion?: string;
 }
 
 export type CompatibilityMatrixValidationResult =
@@ -85,14 +80,14 @@ function compatibilityMatrixPreflightValue(document: unknown): CompatibilityMatr
   return document as unknown as CompatibilityMatrixV01;
 }
 
-function rangeIssue(
+function versionIssue(
   field: string,
   expected: string,
   actual: string,
   code: Extract<
     CompatibilityMatrixIssueCode,
-    "contracts_range_mismatch" | "contracts_dependency_range_mismatch"
-  > = "contracts_range_mismatch"
+    "contracts_version_mismatch" | "contracts_dependency_version_mismatch"
+  > = "contracts_version_mismatch"
 ): CompatibilityMatrixIssue[] {
   if (actual === expected) {
     return [];
@@ -114,16 +109,21 @@ function sdkMetadataIssues(
   matrix: CompatibilityMatrixV01,
   options: ValidateCompatibilityMatrixForSdkOptions
 ): CompatibilityMatrixIssue[] {
-  const expectedContractsRange = options.expectedContractsRange ?? SDK_SUPPORTED_CONTRACTS_RANGE;
+  const expectedContractsVersion =
+    options.expectedContractsVersion ?? SDK_REQUIRED_CONTRACTS_VERSION;
   const sdkPackageName = options.sdkPackageName ?? "@skenion/sdk";
   const issues: CompatibilityMatrixIssue[] = [];
 
   issues.push(
-    ...rangeIssue("contracts-range", expectedContractsRange, matrix["contracts-range"]),
-    ...rangeIssue(
-      "components.sdk.supported-contracts-range",
-      matrix["contracts-range"],
-      matrix.components.sdk["supported-contracts-range"]
+    ...versionIssue(
+      "contracts-version",
+      expectedContractsVersion,
+      matrix["contracts-version"]
+    ),
+    ...versionIssue(
+      "components.sdk.required-contracts-version",
+      matrix["contracts-version"],
+      matrix.components.sdk["required-contracts-version"]
     )
   );
 
@@ -152,21 +152,21 @@ function sdkMetadataIssues(
     });
   }
 
-  if (options.contractsDependencyRange === undefined) {
+  if (options.contractsDependencyVersion === undefined) {
     issues.push({
-      code: "missing_contracts_dependency_range",
+      code: "missing_contracts_dependency_version",
       component: "contracts",
       field: "peerDependencies.@skenion/contracts",
-      expected: expectedContractsRange,
-      message: `@skenion/contracts peer dependency range must be declared as ${expectedContractsRange}`
+      expected: expectedContractsVersion,
+      message: `@skenion/contracts peer dependency must be declared as ${expectedContractsVersion}`
     });
   } else {
     issues.push(
-      ...rangeIssue(
+      ...versionIssue(
         "peerDependencies.@skenion/contracts",
-        expectedContractsRange,
-        options.contractsDependencyRange,
-        "contracts_dependency_range_mismatch"
+        expectedContractsVersion,
+        options.contractsDependencyVersion,
+        "contracts_dependency_version_mismatch"
       )
     );
   }
@@ -176,17 +176,17 @@ function sdkMetadataIssues(
       code: "missing_contracts_package_version",
       component: "contracts",
       field: "installed @skenion/contracts version",
-      expected: expectedContractsRange,
-      message: `installed @skenion/contracts version evidence is required and must satisfy ${expectedContractsRange}`
+      expected: expectedContractsVersion,
+      message: `installed @skenion/contracts version evidence is required and must be ${expectedContractsVersion}`
     });
-  } else if (!satisfiesV0CompatibilityRange(options.contractsPackageVersion, expectedContractsRange)) {
+  } else if (options.contractsPackageVersion !== expectedContractsVersion) {
     issues.push({
       code: "incompatible_contracts_package_version",
       component: "contracts",
       field: "installed @skenion/contracts version",
-      expected: expectedContractsRange,
+      expected: expectedContractsVersion,
       actual: options.contractsPackageVersion,
-      message: `installed @skenion/contracts version ${options.contractsPackageVersion} must satisfy ${expectedContractsRange}`
+      message: `installed @skenion/contracts version ${options.contractsPackageVersion} must be ${expectedContractsVersion}`
     });
   }
 

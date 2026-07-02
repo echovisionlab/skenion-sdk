@@ -80,66 +80,12 @@ function resolveContractsPath(inputPath) {
   );
 }
 
-function parseVersion(version) {
-  const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
-  if (match === null) {
-    throw new Error(`Unsupported semver version: ${version}`);
+function verifyDeclaredVersion(name, version, contractsVersion) {
+  if (typeof version !== "string" || version.length === 0) {
+    throw new Error(`${name} must declare a ${packageName} exact version`);
   }
-  return match.slice(1, 4).map((part) => Number(part));
-}
-
-function compareVersions(left, right) {
-  const leftParts = parseVersion(left);
-  const rightParts = parseVersion(right);
-  for (let index = 0; index < 3; index += 1) {
-    if (leftParts[index] !== rightParts[index]) {
-      return leftParts[index] > rightParts[index] ? 1 : -1;
-    }
-  }
-  return 0;
-}
-
-function satisfiesComparator(version, comparator) {
-  const match = /^(>=|>|<=|<|=)?\s*(\d+\.\d+\.\d+)$/.exec(comparator);
-  if (match === null) {
-    throw new Error(`Unsupported dependency range comparator: ${comparator}`);
-  }
-
-  const operator = match[1] ?? "=";
-  const comparison = compareVersions(version, match[2]);
-  switch (operator) {
-    case ">=":
-      return comparison >= 0;
-    case ">":
-      return comparison > 0;
-    case "<=":
-      return comparison <= 0;
-    case "<":
-      return comparison < 0;
-    case "=":
-      return comparison === 0;
-    default:
-      throw new Error(`Unsupported dependency range operator: ${operator}`);
-  }
-}
-
-function versionSatisfiesRange(version, range) {
-  if (range === version) {
-    return true;
-  }
-
-  return range
-    .split(/\s+/)
-    .filter(Boolean)
-    .every((comparator) => satisfiesComparator(version, comparator));
-}
-
-function verifyDeclaredRange(name, range, contractsVersion) {
-  if (typeof range !== "string" || range.length === 0) {
-    throw new Error(`${name} must declare a ${packageName} range`);
-  }
-  if (!versionSatisfiesRange(contractsVersion, range)) {
-    throw new Error(`${packageName}@${contractsVersion} does not satisfy ${name} range ${range}`);
+  if (version !== contractsVersion) {
+    throw new Error(`${name} ${packageName} dependency ${version} must be ${contractsVersion}`);
   }
 }
 
@@ -258,8 +204,8 @@ function main() {
 
   const contractsVersion = contractsPackage.version;
   verifyStableLocalVersion(contractsVersion);
-  verifyDeclaredRange("peerDependencies", sdkPackage.peerDependencies?.[packageName], contractsVersion);
-  verifyDeclaredRange("devDependencies", sdkPackage.devDependencies?.[packageName], contractsVersion);
+  verifyDeclaredVersion("peerDependencies", sdkPackage.peerDependencies?.[packageName], contractsVersion);
+  verifyDeclaredVersion("devDependencies", sdkPackage.devDependencies?.[packageName], contractsVersion);
 
   const evidence = gitEvidence(contractsPath);
   console.log(`Using local ${packageName}@${contractsVersion}`);

@@ -1,0 +1,1 @@
+export const SDK_REQUIRED_CONTRACTS_VERSION = "0.61.0";
