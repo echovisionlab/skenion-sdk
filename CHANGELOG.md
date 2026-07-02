@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.50.1](https://github.com/skenion/skenion-sdk/compare/v0.50.0...v0.50.1) (2026-07-02)
+
+
+### Bug Fixes
+
+* require exact contracts version ([#81](https://github.com/skenion/skenion-sdk/issues/81)) ([0d9ed61](https://github.com/skenion/skenion-sdk/commit/0d9ed6108ec5c0ab3a0ca5a8377ce719c9560712))
+
 ## [0.50.0](https://github.com/skenion/skenion-sdk/compare/v0.49.0...v0.50.0) (2026-07-01)
 
 
