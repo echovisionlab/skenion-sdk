@@ -80,21 +80,83 @@ function resolveContractsPath(inputPath) {
   );
 }
 
-function verifyDeclaredVersion(name, version, contractsVersion) {
-  if (typeof version !== "string" || version.length === 0) {
-    throw new Error(`${name} must declare a ${packageName} exact version`);
-  }
-  if (version !== contractsVersion) {
-    throw new Error(`${name} ${packageName} dependency ${version} must be ${contractsVersion}`);
-  }
-}
-
 function verifyStableLocalVersion(version) {
   if (typeof version !== "string" || !/^\d+\.\d+\.\d+$/.test(version)) {
     throw new Error(
       `${packageName} local version must be an exact stable x.y.z version; prerelease/build metadata is not supported: ${version}`
     );
   }
+}
+
+function verifyDeclaredContractsMetadata(peerRange, devVersion, contractsVersion) {
+  if (typeof peerRange !== "string" || peerRange.length === 0) {
+    throw new Error(`peerDependencies must declare a ${packageName} supported range`);
+  }
+  if (typeof devVersion !== "string" || !/^\d+\.\d+\.\d+$/.test(devVersion)) {
+    throw new Error(`devDependencies ${packageName} dependency ${devVersion} must be an exact version`);
+  }
+  if (!satisfies(devVersion, peerRange)) {
+    throw new Error(`devDependencies ${packageName} ${devVersion} must satisfy peer range ${peerRange}`);
+  }
+  if (!satisfies(contractsVersion, peerRange)) {
+    throw new Error(`local ${packageName} ${contractsVersion} must satisfy SDK peer range ${peerRange}`);
+  }
+}
+
+function satisfies(version, range) {
+  const normalized = range.trim();
+  if (normalized === version) {
+    return true;
+  }
+
+  if (/^\d+\.\d+\.\d+$/.test(normalized)) {
+    return normalized === version;
+  }
+
+  if (normalized.startsWith("^")) {
+    const base = parseVersion(normalized.slice(1));
+    const actual = parseVersion(version);
+    return compareVersions(actual, base) >= 0 && actual.major === base.major;
+  }
+
+  if (normalized.startsWith("~")) {
+    const base = parseVersion(normalized.slice(1));
+    const actual = parseVersion(version);
+    return compareVersions(actual, base) >= 0 && actual.major === base.major && actual.minor === base.minor;
+  }
+
+  const parts = normalized.split(/\s+/).filter(Boolean);
+  if (parts.length > 0 && parts.every((part) => /^(?:>=|>|<=|<)\d+\.\d+\.\d+$/.test(part))) {
+    const actual = parseVersion(version);
+    return parts.every((part) => {
+      const [, operator, operandText] = part.match(/^(>=|>|<=|<)(\d+\.\d+\.\d+)$/);
+      const comparison = compareVersions(actual, parseVersion(operandText));
+      return (
+        (operator === ">=" && comparison >= 0) ||
+        (operator === ">" && comparison > 0) ||
+        (operator === "<=" && comparison <= 0) ||
+        (operator === "<" && comparison < 0)
+      );
+    });
+  }
+
+  throw new Error(`Unsupported ${packageName} range ${JSON.stringify(range)}. Use an exact version, ^, ~, or simple comparator range.`);
+}
+
+function parseVersion(version) {
+  const match = version.match(/^(\d+)\.(\d+)\.(\d+)$/);
+  if (!match) {
+    throw new Error(`Unsupported ${packageName} version ${JSON.stringify(version)}. Expected x.y.z.`);
+  }
+  return {
+    major: Number(match[1]),
+    minor: Number(match[2]),
+    patch: Number(match[3])
+  };
+}
+
+function compareVersions(left, right) {
+  return left.major - right.major || left.minor - right.minor || left.patch - right.patch;
 }
 
 function runGit(args, cwd) {
@@ -204,8 +266,11 @@ function main() {
 
   const contractsVersion = contractsPackage.version;
   verifyStableLocalVersion(contractsVersion);
-  verifyDeclaredVersion("peerDependencies", sdkPackage.peerDependencies?.[packageName], contractsVersion);
-  verifyDeclaredVersion("devDependencies", sdkPackage.devDependencies?.[packageName], contractsVersion);
+  verifyDeclaredContractsMetadata(
+    sdkPackage.peerDependencies?.[packageName],
+    sdkPackage.devDependencies?.[packageName],
+    contractsVersion
+  );
 
   const evidence = gitEvidence(contractsPath);
   console.log(`Using local ${packageName}@${contractsVersion}`);

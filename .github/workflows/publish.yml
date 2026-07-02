@@ -92,7 +92,7 @@ jobs:
           contracts_version="$(node <<'NODE'
           const fs = require("node:fs");
           const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-          console.log(pkg.peerDependencies["@skenion/contracts"]);
+          console.log(pkg.devDependencies["@skenion/contracts"]);
           NODE
           )"
           echo "contracts_version=${contracts_version}" >> "${GITHUB_OUTPUT}"

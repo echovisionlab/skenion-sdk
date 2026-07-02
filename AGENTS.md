@@ -58,10 +58,17 @@ Release Please owns natural component releases for this repository. The hub
 verifies and promotes compatibility matrices; it does not conduct component
 releases or require SDK, Contracts, Runtime, Studio, docs, and examples to
 publish the same product version. SDK release work must declare the Contracts
-compatibility line it supports: supporting Contracts `0.49` means supporting
-`>=0.49.0 <0.50.0`, while SDK may release at its own component version.
-Publishing must happen only through GitHub Actions release workflows and Release
-Please, not local npm publishing.
+range it supports through package metadata, while SDK may release at its own
+component version. Publishing must happen only through GitHub Actions release
+workflows and Release Please, not local npm publishing.
+
+CI must not hardcode or independently enforce a Contracts version, Contracts
+line, or supported Contracts range as a compatibility authority. Default CI
+should install the `@skenion/contracts` dependency declared by
+`package.json`/`pnpm-lock.yaml` and run the SDK build/tests against that actual
+package. Release CI may reject local/path/Git dependencies and malformed
+package metadata, but it must derive any reported built-against version or
+supported range from package metadata rather than workflow-owned constants.
 
 All release-state writes must happen inside GitHub Actions as well. Do not
 create, edit, delete, promote, demote, or repair GitHub Releases, release

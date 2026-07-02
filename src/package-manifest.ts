@@ -19,11 +19,11 @@ import type {
 import {
   parseObjectSpec
 } from "./project-authoring.js";
-import { SDK_REQUIRED_CONTRACTS_VERSION } from "./contracts-version.js";
+import { SDK_CONTRACTS_BUILT_AGAINST_VERSION } from "./contracts-version.js";
 
 const CURRENT_SCHEMA_VERSION = "0.1.0";
 const DEFAULT_CONTRACTS_REQUIREMENT: PackageContractsRequirementV01 = {
-  version: SDK_REQUIRED_CONTRACTS_VERSION
+  version: SDK_CONTRACTS_BUILT_AGAINST_VERSION
 };
 
 export interface DefinedObjectDisplayOptions {

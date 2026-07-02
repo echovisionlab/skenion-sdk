@@ -1,6 +1,9 @@
 import { validateCompatibilityMatrixV01 } from "@skenion/contracts";
 import type { CompatibilityMatrixV01 } from "@skenion/contracts";
-import { SDK_REQUIRED_CONTRACTS_VERSION } from "./contracts-version.js";
+import {
+  SDK_CONTRACTS_BUILT_AGAINST_VERSION,
+  SDK_SUPPORTED_CONTRACTS_RANGE
+} from "./contracts-version.js";
 
 export type CompatibilityMatrixIssueCode =
   | "invalid_matrix"
@@ -29,9 +32,10 @@ export interface CompatibilityMatrixIssue {
 export interface ValidateCompatibilityMatrixForSdkOptions {
   sdkPackageName?: string;
   sdkPackageVersion?: string;
-  contractsDependencyVersion?: string;
+  contractsDependencyRange?: string;
   contractsPackageVersion?: string;
   expectedContractsVersion?: string;
+  expectedContractsRange?: string;
 }
 
 export type CompatibilityMatrixValidationResult =
@@ -110,7 +114,10 @@ function sdkMetadataIssues(
   options: ValidateCompatibilityMatrixForSdkOptions
 ): CompatibilityMatrixIssue[] {
   const expectedContractsVersion =
-    options.expectedContractsVersion ?? SDK_REQUIRED_CONTRACTS_VERSION;
+    options.expectedContractsVersion ?? SDK_CONTRACTS_BUILT_AGAINST_VERSION;
+  const expectedContractsRange =
+    options.expectedContractsRange ?? SDK_SUPPORTED_CONTRACTS_RANGE;
+  const contractsDependencyRange = options.contractsDependencyRange;
   const sdkPackageName = options.sdkPackageName ?? "@skenion/sdk";
   const issues: CompatibilityMatrixIssue[] = [];
 
@@ -152,20 +159,20 @@ function sdkMetadataIssues(
     });
   }
 
-  if (options.contractsDependencyVersion === undefined) {
+  if (contractsDependencyRange === undefined) {
     issues.push({
       code: "missing_contracts_dependency_version",
       component: "contracts",
       field: "peerDependencies.@skenion/contracts",
-      expected: expectedContractsVersion,
-      message: `@skenion/contracts peer dependency must be declared as ${expectedContractsVersion}`
+      expected: expectedContractsRange,
+      message: `@skenion/contracts peer dependency must declare supported range ${expectedContractsRange}`
     });
   } else {
     issues.push(
       ...versionIssue(
         "peerDependencies.@skenion/contracts",
-        expectedContractsVersion,
-        options.contractsDependencyVersion,
+        expectedContractsRange,
+        contractsDependencyRange,
         "contracts_dependency_version_mismatch"
       )
     );
