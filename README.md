@@ -35,8 +35,8 @@ project, patch-library, graph-fragment, and package contracts:
   validate SDK-owned session info/events, track replay cursors, and summarize
   sidecar startup/health capability metadata.
 - Compatibility matrix helpers validate `skenion.compatibility-matrix` `0.1.0`
-  documents for promotion checks, including the SDK-required Contracts version
-  and installed Contracts package evidence.
+  documents for promotion checks, including the SDK built-against Contracts
+  version, supported Contracts range, and installed Contracts package evidence.
 - Shared graph, project, package, manifest, graph-fragment, and paste request
   payloads are validated through `@skenion/contracts`.
 - Only current contract helper names are exported; unsupported versions are
@@ -197,16 +197,18 @@ import { readCompatibilityMatrixForSdk } from "@skenion/sdk";
 
 const matrix = readCompatibilityMatrixForSdk(compatibilityMatrixJson, {
   sdkPackageVersion: releaseWorkflow.sdkPackageVersion,
-  contractsDependencyVersion: releaseWorkflow.contractsDependencyVersion,
+  contractsDependencyRange: releaseWorkflow.contractsDependencyRange,
   contractsPackageVersion: releaseWorkflow.installedContractsVersion
 });
 ```
 
-The SDK peer dependency must declare the exact required Contracts package
-version. SDK package versions may differ from Contracts package versions as long
-as the matrix `contracts-version`, SDK `required-contracts-version`, peer
-dependency, and installed Contracts package version all agree on that exact
-Contracts version.
+The SDK dev dependency and installed package evidence record the exact
+`@skenion/contracts` package version used to build the SDK. The peer dependency
+records the supported compatibility range: during v0 this is the broad
+`>=0.0.0 <1.0.0` range, while v1 and later derive strict minor ranges from the
+exact built-against version. Compatibility matrix `contracts-version` and the
+SDK matrix provenance field remain exact evidence fields; they are not CI-owned
+support-range gates.
 
 ## Local Contracts Integration
 
@@ -223,8 +225,9 @@ If no path is provided, the script checks these local source locations in order:
 `.deps/skenion-contracts/packages/ts`, `../Skenion-contracts/packages/ts`, and
 `../skenion-contracts/packages/ts`. The local Contracts package must be built
 with `dist/index.js` present, must be named `@skenion/contracts`, and its
-version must match both the SDK peer and dev dependency versions. The script
-prints Contracts git branch/commit evidence when available, temporarily points
+version must satisfy the SDK peer dependency range. The SDK dev dependency stays
+the exact registry build input for normal release mode. The script prints
+Contracts git branch/commit evidence when available, temporarily points
 `node_modules/@skenion/contracts` at the local package, runs SDK `ci`, and then
 restores the original installed dependency without changing committed manifests
 or lockfiles. Release mode rejects this override:

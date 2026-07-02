@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  SDK_REQUIRED_CONTRACTS_VERSION,
+  SDK_CONTRACTS_BUILT_AGAINST_VERSION,
+  SDK_SUPPORTED_CONTRACTS_RANGE,
   SkenionCompatibilityMatrixError,
   readCompatibilityMatrixForSdk,
+  supportedContractsRangeForVersion,
   validateCompatibilityMatrixForSdk
 } from "../dist/index.js";
 
 const contractsVersion = "0.61.0";
+const contractsRange = ">=0.0.0 <1.0.0";
 const sdkVersion = "0.44.0";
 
 function registryPackage(ecosystem, name, version) {
@@ -54,7 +57,7 @@ function validCompatibilityMatrix() {
 function validate(matrix, options = {}) {
   return validateCompatibilityMatrixForSdk(matrix, {
     sdkPackageVersion: sdkVersion,
-    contractsDependencyVersion: contractsVersion,
+    contractsDependencyRange: contractsRange,
     contractsPackageVersion: contractsVersion,
     ...options
   });
@@ -64,34 +67,41 @@ function issueCodes(result) {
   return result.issues.map((issue) => issue.code);
 }
 
-test("compatibility matrix helper accepts unequal SDK and Contracts component versions for the required Contracts version", () => {
+test("compatibility matrix helper accepts unequal SDK and Contracts component versions for built-against provenance", () => {
   const matrix = validCompatibilityMatrix();
   const result = validate(matrix);
 
-  assert.equal(SDK_REQUIRED_CONTRACTS_VERSION, contractsVersion);
+  assert.equal(SDK_CONTRACTS_BUILT_AGAINST_VERSION, contractsVersion);
+  assert.equal(SDK_SUPPORTED_CONTRACTS_RANGE, contractsRange);
   assert.equal(result.ok, true);
   assert.equal(result.value.components.sdk.npm.version, sdkVersion);
   assert.equal(result.value.components.contracts.npm.version, contractsVersion);
   assert.notEqual(result.value.components.sdk.npm.version, result.value.components.contracts.npm.version);
   assert.equal(readCompatibilityMatrixForSdk(matrix, {
     sdkPackageVersion: sdkVersion,
-    contractsDependencyVersion: contractsVersion,
+    contractsDependencyRange: contractsRange,
     contractsPackageVersion: contractsVersion
   })["contracts-version"], contractsVersion);
 });
 
-test("compatibility matrix helper accepts the explicit Contracts peer version", () => {
+test("compatibility matrix helper accepts the explicit Contracts peer range", () => {
   const result = validate(validCompatibilityMatrix(), {
-    contractsDependencyVersion: "0.61.0",
+    contractsDependencyRange: contractsRange,
     contractsPackageVersion: "0.61.0"
   });
 
   assert.equal(result.ok, true);
 });
 
-test("compatibility matrix helper rejects stale, wildcard, and range peer versions", () => {
-  for (const contractsDependencyVersion of ["0.44.0", "*", ">=0.61.0 <0.62.0"]) {
-    const result = validate(validCompatibilityMatrix(), { contractsDependencyVersion });
+test("Contracts range helper keeps v0 broad and v1+ strict minor", () => {
+  assert.equal(supportedContractsRangeForVersion("0.61.0"), ">=0.0.0 <1.0.0");
+  assert.equal(supportedContractsRangeForVersion("1.2.3"), ">=1.2.0 <1.3.0");
+  assert.throws(() => supportedContractsRangeForVersion("not-semver"), /x\.y\.z SemVer/);
+});
+
+test("compatibility matrix helper rejects exact, wildcard, and minor-line peer ranges", () => {
+  for (const contractsDependencyRange of ["0.61.0", "*", ">=0.61.0 <0.62.0"]) {
+    const result = validate(validCompatibilityMatrix(), { contractsDependencyRange });
 
     assert.equal(result.ok, false);
     assert.deepEqual(issueCodes(result), ["contracts_dependency_version_mismatch"]);

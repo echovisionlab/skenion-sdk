@@ -100,7 +100,11 @@ export {
   readCompatibilityMatrixForSdk,
   validateCompatibilityMatrixForSdk
 } from "./compatibility-matrix.js";
-export { SDK_REQUIRED_CONTRACTS_VERSION } from "./contracts-version.js";
+export {
+  SDK_CONTRACTS_BUILT_AGAINST_VERSION,
+  SDK_SUPPORTED_CONTRACTS_RANGE,
+  supportedContractsRangeForVersion
+} from "./contracts-version.js";
 export type {
   CreateRuntimeCollaborationCausalMetadataOptions,
   CreateRuntimeCollaborationChangeSetOperationOptions,
