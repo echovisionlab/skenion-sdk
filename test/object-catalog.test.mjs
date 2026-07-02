@@ -56,7 +56,7 @@ const manipulatorEntry = {
   provider: {
     kind: "package",
     packageId: "skenion/core",
-    version: "0.58.0"
+    version: "0.61.0"
   },
   definition: definition("skenion.core.manipulator", "Manipulator"),
   creatable: true,
@@ -116,7 +116,7 @@ test("catalog resolution treats bracket-equivalent specs as the same object synt
     provider: {
       kind: "package",
       packageId: "skenion/core",
-      version: "0.58.0"
+      version: "0.61.0"
     },
     definition: definition("skenion.core.oscillator", "Oscillator"),
     creatable: true,
@@ -131,7 +131,7 @@ test("catalog resolution treats bracket-equivalent specs as the same object synt
     provider: {
       kind: "package",
       packageId: "skenion/extra",
-      version: "0.58.0"
+      version: "0.61.0"
     },
     definition: definition("skenion.extra.oscillator", "Extra Oscillator"),
     creatable: true,

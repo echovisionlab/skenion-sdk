@@ -87,83 +87,35 @@ jobs:
           }
           NODE
 
-          node scripts/validate-contracts-dependency-range.mjs
+          node scripts/validate-contracts-dependency-version.mjs
           echo "version=${SDK_VERSION}" >> "${GITHUB_OUTPUT}"
-          contracts_range="$(node <<'NODE'
+          contracts_version="$(node <<'NODE'
           const fs = require("node:fs");
           const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
           console.log(pkg.peerDependencies["@skenion/contracts"]);
           NODE
           )"
-          echo "contracts_range=${contracts_range}" >> "${GITHUB_OUTPUT}"
+          echo "contracts_version=${contracts_version}" >> "${GITHUB_OUTPUT}"
       - id: contracts
         name: Resolve released contracts package
         shell: bash
         env:
-          CONTRACTS_RANGE: ${{ steps.package.outputs.contracts_range }}
+          CONTRACTS_VERSION: ${{ steps.package.outputs.contracts_version }}
         run: |
           set -euo pipefail
 
-          versions_json="$(npm view @skenion/contracts versions --json)"
-
-          contracts_version="$(CONTRACTS_VERSIONS_JSON="${versions_json}" node <<'NODE'
-          function parseVersion(version) {
-            const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(version);
-            return match === null ? undefined : match.slice(1).map(Number);
-          }
-
-          function compareVersions(left, right) {
-            const leftParts = parseVersion(left);
-            const rightParts = parseVersion(right);
-            if (leftParts === undefined || rightParts === undefined) {
-              throw new Error("cannot compare malformed SemVer versions");
-            }
-            for (let index = 0; index < leftParts.length; index += 1) {
-              const diff = leftParts[index] - rightParts[index];
-              if (diff !== 0) {
-                return diff;
-              }
-            }
-            return 0;
-          }
-
-          const range = process.env.CONTRACTS_RANGE;
-          const rangeMatch = /^>=0\.(\d+)\.0 <0\.(\d+)\.0$/.exec(range);
-          if (rangeMatch === null || Number(rangeMatch[2]) !== Number(rangeMatch[1]) + 1) {
-            console.error(`unsupported @skenion/contracts peer range ${range}`);
-            process.exit(1);
-          }
-
-          const supportedMinor = Number(rangeMatch[1]);
-          const versions = JSON.parse(process.env.CONTRACTS_VERSIONS_JSON ?? "[]");
-          const publishedVersions = Array.isArray(versions) ? versions : [versions];
-          const candidates = publishedVersions
-            .filter((version) => {
-              if (typeof version !== "string") {
-                return false;
-              }
-              const parsed = parseVersion(version);
-              return parsed !== undefined && parsed[0] === 0 && parsed[1] === supportedMinor;
-            })
-            .sort(compareVersions);
-
-          const contractsVersion = candidates.at(-1);
-          if (contractsVersion === undefined) {
-            console.error(`no published @skenion/contracts version satisfies ${range}`);
-            process.exit(1);
-          }
-
-          console.log(contractsVersion);
-          NODE
-          )"
-
-          actual="$(npm view "@skenion/contracts@${contracts_version}" version)"
-          if [[ "${actual}" != "${contracts_version}" ]]; then
-            echo "npm resolved @skenion/contracts@${contracts_version} to ${actual}" >&2
+          if ! [[ "${CONTRACTS_VERSION}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "@skenion/contracts dependency must be exact SemVer x.y.z; got ${CONTRACTS_VERSION}" >&2
             exit 1
           fi
 
-          echo "version=${contracts_version}" >> "${GITHUB_OUTPUT}"
+          actual="$(npm view "@skenion/contracts@${CONTRACTS_VERSION}" version)"
+          if [[ "${actual}" != "${CONTRACTS_VERSION}" ]]; then
+            echo "npm resolved @skenion/contracts@${CONTRACTS_VERSION} to ${actual}" >&2
+            exit 1
+          fi
+
+          echo "version=${CONTRACTS_VERSION}" >> "${GITHUB_OUTPUT}"
       - name: Use released contracts package
         shell: bash
         env:

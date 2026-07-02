@@ -9,16 +9,16 @@ importers:
   .:
     devDependencies:
       '@skenion/contracts':
-        specifier: '>=0.58.0 <0.59.0'
-        version: 0.58.0
+        specifier: 0.61.0
+        version: 0.61.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
 
 packages:
 
-  '@skenion/contracts@0.58.0':
-    resolution: {integrity: sha512-8JM0ab4Ie537ingOP8U73gB4eTOVc5sw/06f40gTG4CXK40Loq/6azvSJc9W2F0ZHGq16e2K4KOKpz6SDaVIjA==}
+  '@skenion/contracts@0.61.0':
+    resolution: {integrity: sha512-PxPg7oKpNaazV4w3h2hQ6NZ8Fbz0KrmwSGWTGzqGFxzZZ8odZN+mUEBrbmE/Gu1Wxl3T5IRb76wCx8EJUSFsXw==}
 
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
@@ -43,7 +43,7 @@ packages:
 
 snapshots:
 
-  '@skenion/contracts@0.58.0':
+  '@skenion/contracts@0.61.0':
     dependencies:
       ajv: 8.20.0
 

@@ -6,7 +6,7 @@ import type {
   NodeDefinitionManifestV01,
   PackageCategoryV01,
   PackageChecksumRefV01,
-  PackageContractsSupportV01,
+  PackageContractsRequirementV01,
   PackageIssueV01,
   PackageEvidenceRefV01,
   PackageManifestV01,
@@ -19,11 +19,11 @@ import type {
 import {
   parseObjectSpec
 } from "./project-authoring.js";
+import { SDK_REQUIRED_CONTRACTS_VERSION } from "./contracts-version.js";
 
 const CURRENT_SCHEMA_VERSION = "0.1.0";
-const DEFAULT_CONTRACTS_SUPPORT: PackageContractsSupportV01 = {
-  line: "0.58",
-  range: ">=0.58.0 <0.59.0"
+const DEFAULT_CONTRACTS_REQUIREMENT: PackageContractsRequirementV01 = {
+  version: SDK_REQUIRED_CONTRACTS_VERSION
 };
 
 export interface DefinedObjectDisplayOptions {
@@ -52,7 +52,7 @@ export interface DefinePackageManifestOptions {
   version: string;
   displayName?: string;
   category?: PackageCategoryV01;
-  contracts?: PackageContractsSupportV01;
+  contracts?: PackageContractsRequirementV01;
   runtimeAbiRange?: string;
   targets?: PackageTargetTripleV01[];
   objects?: DefinedPackageObject[];
@@ -150,7 +150,7 @@ export function definePackageManifest(options: DefinePackageManifestOptions): Pa
     version: options.version,
     ...(options.displayName === undefined ? {} : { displayName: options.displayName }),
     category: options.category ?? "patch",
-    contracts: options.contracts ?? DEFAULT_CONTRACTS_SUPPORT,
+    contracts: options.contracts ?? DEFAULT_CONTRACTS_REQUIREMENT,
     ...(options.runtimeAbiRange === undefined ? {} : { runtimeAbiRange: options.runtimeAbiRange }),
     ...(options.targets === undefined ? {} : { targets: [...options.targets] }),
     provides: {

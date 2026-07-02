@@ -96,11 +96,11 @@ export {
   summarizeRuntimeSidecarCapabilities
 } from "./runtime-client.js";
 export {
-  SDK_SUPPORTED_CONTRACTS_RANGE,
   SkenionCompatibilityMatrixError,
   readCompatibilityMatrixForSdk,
   validateCompatibilityMatrixForSdk
 } from "./compatibility-matrix.js";
+export { SDK_REQUIRED_CONTRACTS_VERSION } from "./contracts-version.js";
 export type {
   CreateRuntimeCollaborationCausalMetadataOptions,
   CreateRuntimeCollaborationChangeSetOperationOptions,

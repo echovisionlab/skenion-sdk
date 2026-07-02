@@ -3,13 +3,14 @@
 import { readFileSync } from "node:fs";
 
 const packageName = "@skenion/contracts";
-const rangePattern = /^>=0\.(\d+)\.0 <0\.(\d+)\.0$/;
+const requiredVersion = "0.61.0";
+const exactSemverPattern = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/;
 
 function readPackageJson() {
   return JSON.parse(readFileSync("package.json", "utf8"));
 }
 
-function validateContractsDependencyRange(pkg) {
+function validateContractsDependencyVersion(pkg) {
   const peer = pkg.peerDependencies?.[packageName];
   const dev = pkg.devDependencies?.[packageName];
   const errors = [];
@@ -24,25 +25,22 @@ function validateContractsDependencyRange(pkg) {
     errors.push(`${packageName} peer dependency ${peer} must match devDependency ${dev}`);
   }
 
-  const range = peer ?? dev;
-  const match = typeof range === "string" ? rangePattern.exec(range) : null;
-  if (range !== undefined && match === null) {
-    errors.push(
-      `${packageName} range ${range} must use the supported form >=0.x.0 <0.y.0`
-    );
+  const version = peer ?? dev;
+  if (version !== undefined && exactSemverPattern.exec(version) === null) {
+    errors.push(`${packageName} dependency ${version} must be an exact SemVer x.y.z version`);
   }
-  if (match !== null && Number(match[2]) !== Number(match[1]) + 1) {
-    errors.push(`${packageName} range ${range} must span exactly one 0.x compatibility line`);
+  if (version !== undefined && version !== requiredVersion) {
+    errors.push(`${packageName} dependency ${version} must be ${requiredVersion}`);
   }
 
   return {
     ok: errors.length === 0,
     errors,
-    range
+    version
   };
 }
 
-const result = validateContractsDependencyRange(readPackageJson());
+const result = validateContractsDependencyVersion(readPackageJson());
 if (!result.ok) {
   for (const error of result.errors) {
     console.error(error);
@@ -50,4 +48,4 @@ if (!result.ok) {
   process.exit(1);
 }
 
-console.log(`${packageName} dependency range: ${result.range}`);
+console.log(`${packageName} dependency version: ${result.version}`);
